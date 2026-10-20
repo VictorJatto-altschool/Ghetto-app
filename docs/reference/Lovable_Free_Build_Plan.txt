@@ -1,0 +1,207 @@
+# GHETTO APP — Lovable Free Build Plan
+
+## 1. Mission
+
+Build the initial GHETTO APP application using Lovable, prioritising a distinctive visual identity, a highly polished landing page, responsive application shell, mobile-first interaction design, and a maintainable foundation for real features.
+
+Lovable is the initial implementation tool, not the authority that may discard product requirements or make the entire system depend on proprietary generated code.
+
+The application must be transferable to a GitHub repository and maintainable by Codex.
+
+## 2. Non-negotiable rules
+
+- Read the project's product specification and all existing implementation documents before building.
+- Preserve established product requirements.
+- Do not generate a generic social-media template.
+- Do not produce a static mock-up and claim that it is a working product.
+- Do not use placeholder actions without identifying them.
+- Do not invent users, conversations, reactions, payments, messages, or multiplayer activity to create a false impression of functionality.
+- Do not purchase services, activate paid trials, or deploy publicly without explicit approval.
+- Do not add unnecessary frameworks or dependencies.
+- Make changes in small, reviewable stages.
+- Maintain source control and explain significant architecture decisions.
+- Do not overwrite existing working features without first inspecting them.
+
+## 3. Product and brand
+
+Product: GHETTO APP.
+
+Brand direction: Night Culture — expressive, social, premium, youthful, and technology-forward.
+
+Core palette:
+- Deep charcoal and night ink for dark surfaces.
+- Electric violet for primary actions and selected states.
+- Signal orange for selected live, event, and alert states.
+- Warm, readable neutral surfaces.
+- A complete light theme, not merely a dark theme with a white background.
+
+Typography:
+- Space Grotesk for display headings.
+- Manrope for body text and interface elements.
+- IBM Plex Mono for selected technical metadata.
+- Include suitable fallbacks and avoid blocking initial rendering while fonts load.
+
+Use a consistent spacing scale, border-radius scale, elevation system, icon sizing, typography scale, and interaction-state system.
+
+Create an original logo and wordmark. Do not imitate existing messaging brands.
+
+## 4. Design references
+
+I may supply screenshots, videos, URLs, Figma designs, and written references at any time.
+
+For each reference:
+1. Identify the target feature and platform.
+2. Inspect its hierarchy, spacing, layout, typography, interaction patterns, animation, and responsive behaviour.
+3. Document which characteristics must be reproduced.
+4. Map those characteristics to the GHETTO APP design system.
+5. Implement the actual component or interaction.
+6. Compare the implementation with the reference.
+7. Record the reference and its acceptance criteria in the project documentation.
+
+Preserve requested layout and behaviour without copying another company's branding or proprietary assets.
+
+If a URL or file cannot be inspected, say so. Do not guess what it contains.
+
+## 5. Build order
+
+### Stage A — Repository and requirements audit
+- Inspect the existing project.
+- Read the product documents.
+- Identify the current framework and installed dependencies.
+- Record implemented, incomplete, simulated, and missing features.
+- Confirm how GitHub synchronisation and export are supported by the selected plan.
+- Do not replace the architecture before reporting what exists.
+
+### Stage B — Design foundation
+Implement:
+- Brand tokens.
+- Dark and light themes.
+- Typography.
+- Buttons and input fields.
+- Menus, dialogs, sheets, tooltips, and notification patterns.
+- Responsive layout primitives.
+- Loading, empty, error, disabled, and success states.
+- Keyboard focus and touch feedback.
+
+### Stage C — Landing page
+Build a visually distinctive landing page with:
+- Custom GHETTO APP branding.
+- A compelling hero section.
+- Real-life, appropriately licensed campus and social photography.
+- Accurate product previews.
+- Clear sign-up and sign-in actions.
+- Sections introducing Chats, Street Views, Campus Life, and Communities.
+- Theme switching.
+- Responsive layouts.
+- A footer with suitable policy and support links.
+- A Premium entry point without invented pricing or unsupported claims.
+
+Avoid generic AI illustrations, meaningless gradients, excessive animation, and random cards.
+
+### Stage D — Responsive application shell
+Desktop:
+- Left navigation rail.
+- Conversation list or section-specific secondary panel.
+- Main content panel.
+- Optional contextual panel when useful.
+- Chats as the default authenticated destination.
+
+Mobile:
+- Compact navigation and dedicated section screens.
+- A conversation list that opens a dedicated conversation screen.
+- A clear back action.
+- Bottom navigation or another tested mobile navigation pattern.
+- Keyboard-aware message composition.
+- Safe-area support.
+- Accessible touch controls.
+
+### Stage E — Feature screens
+Build coherent screens for:
+- Chats and message requests.
+- Contacts.
+- Street Views.
+- Profiles.
+- Notifications and search.
+- Communities and groups.
+- Campus Life.
+- Crews and Quests.
+- Settings and privacy.
+- Premium information.
+
+Connect screens to real functionality as backend capabilities become available. Do not claim unimplemented features are operational.
+
+### Stage F — Backend integration
+Use the agreed backend architecture and environment configuration.
+
+Where Supabase is approved, integrate:
+- Authentication.
+- PostgreSQL data.
+- Row-level security.
+- Storage.
+- Selected real-time functionality.
+
+Do not place service-role credentials in browser code. Do not rely on client-side role checks as the only security control.
+
+### Stage G — Review and handoff
+- Test the application locally where supported.
+- Check responsive layouts.
+- Run available checks.
+- Document incomplete features and external dependencies.
+- Ensure the code is available to Codex through the approved repository workflow.
+
+## 6. Mobile visual direction
+
+The mobile interface must feel premium and iPhone-inspired on both Android and iPhone.
+
+Use:
+- Refined navigation bars.
+- Carefully spaced headers.
+- Elegant rounded sheets and dialogs.
+- Smooth, restrained transitions.
+- Clear typography.
+- Tactile press states.
+- Carefully composed profile and conversation screens.
+- Consistent iconography.
+- Respectful use of safe areas.
+
+On Android, preserve reliable system-back behaviour and keyboard handling. On iPhone, respect notches, the home indicator, and safe-area insets.
+
+Do not pretend a responsive web application is a native iOS or Android app.
+
+## 7. Quality standards
+
+Before declaring a stage complete:
+- Verify that the affected controls work.
+- Check narrow and wide desktop layouts.
+- Check Android-sized and iPhone-sized viewports.
+- Test both themes.
+- Inspect keyboard and touch interactions.
+- Check for clipped content and horizontal overflow.
+- Verify that existing screens still work.
+- Report what was actually tested.
+
+## 8. Zero-budget constraint
+
+Use the available free features first.
+
+Before introducing a service with possible costs:
+- Check its current free-tier limits and terms.
+- Explain why it is needed.
+- Identify free alternatives.
+- Obtain approval before incurring charges.
+
+Do not assume that SMS, voice, video, storage, database usage, GIF search, or hosting will remain free at scale.
+
+## 9. Required completion report
+
+At the end of each stage, report:
+- What changed.
+- Files or areas affected.
+- Functionality implemented.
+- Tests executed and their actual results.
+- Known defects.
+- External dependencies.
+- Remaining work.
+- Any action requiring my approval.
+
+Build incrementally. Do not attempt to complete the entire platform through one giant generation request.

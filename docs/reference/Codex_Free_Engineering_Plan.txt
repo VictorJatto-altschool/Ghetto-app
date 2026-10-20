@@ -1,0 +1,258 @@
+# GHETTO APP — Codex Free Engineering Plan
+
+## 1. Mission
+
+Act as the primary codebase maintenance and engineering agent after Lovable establishes the initial implementation.
+
+Your task is to inspect, understand, complete, secure, and test the actual GHETTO APP repository.
+
+Do not assume the generated code is correct. Do not assume the application is complete because the interface looks finished.
+
+## 2. Source of truth
+
+Treat the following as authoritative project inputs:
+- Master Product Specification.
+- UI/UX Master Directive.
+- Screens and Forms Checklist.
+- Seven-Day Implementation Sprint.
+- Twelve-Week Roadmap.
+- Authentication, SMS, and Premium Specification.
+- Lovable Build Plan.
+- Master Engineering Prompt.
+- Approved reference register.
+- Current source code and migrations.
+
+When documentation and code disagree, investigate and report the discrepancy before changing high-impact behaviour.
+
+Never silently remove a feature to make the build pass.
+
+## 3. First task: repository audit
+
+Before implementing anything:
+1. Inspect the repository structure.
+2. Read the project instructions and Markdown documentation.
+3. Identify the frontend framework, build tool, backend, dependencies, and environment variables.
+4. Inspect the current Git status and avoid overwriting unrelated user changes.
+5. Identify existing routes, components, database migrations, authentication logic, and tests.
+6. Run the existing project using its documented commands where possible.
+7. Run available type checks, linting, tests, and production builds.
+8. Record failures before attempting repairs.
+
+Produce a concise audit that distinguishes:
+- Implemented and tested.
+- Implemented but untested.
+- Partially implemented.
+- Simulated.
+- Missing.
+- Blocked by an external provider.
+
+Do not claim you ran a test if you did not run it.
+
+## 4. Ownership and collaboration with Lovable
+
+Lovable creates the initial implementation and may make later design changes. Codex maintains the canonical source code and performs engineering completion.
+
+Use GitHub as the shared source of truth where available.
+
+Rules:
+- Review diffs before accepting changes.
+- Do not let two agents independently overwrite the same feature without coordination.
+- Use small, understandable commits when commit access is available.
+- Preserve existing working code.
+- Keep dependencies justified.
+- Record important decisions and migrations.
+- Avoid unnecessary rewrites.
+
+When a change originates in Lovable, review it before merging or adopting it.
+
+## 5. Technical direction
+
+Preserve the existing approved stack. The intended direction is:
+- HTML, CSS, TypeScript, and Vite.
+- Phaser 3 for the Campus Life 2D multiplayer world.
+- Supabase PostgreSQL, authentication, storage, and selected real-time functionality.
+
+If the repository already uses a different stack, inspect it first and explain any proposed migration before changing it.
+
+Do not introduce a new major framework merely for convenience.
+
+Separate UI, business logic, data access, authentication, authorisation, real-time networking, and integrations.
+
+## 6. Engineering priorities
+
+Complete work in dependency order:
+
+1. Project stability and reproducible local setup.
+2. Design tokens, responsive application shell, and routing.
+3. Authentication and session handling.
+4. User profiles and privacy settings.
+5. Contacts and message requests.
+6. Private messaging and group conversations.
+7. Reactions, attachments, and chat composer.
+8. Street Views posts, comments, likes, follows, and reshares.
+9. Communities and membership permissions.
+10. Notifications and search.
+11. Campus Life room management and multiplayer synchronisation.
+12. Classroom roles, chat, materials, and voice integration.
+13. Reporting, blocking, moderation, and administrative controls.
+14. Premium entitlement and payment integration only after approval.
+15. Load, security, regression, and production-readiness testing.
+
+Adjust the sequence if the existing architecture has dependencies that require a different order. Document why.
+
+## 7. Backend correctness and security
+
+Implement and verify:
+- Server-side authorisation.
+- Database row-level security.
+- Validation of user input.
+- Protected operations and role checks.
+- Secure session handling.
+- Upload size and type restrictions.
+- Rate limiting where appropriate.
+- Error handling that does not leak secrets.
+- Safe handling of untrusted content.
+- Appropriate audit logging for sensitive administrative actions.
+
+Phone numbers must not appear in public profiles, feeds, participant lists, or group lists.
+
+Never expose private service-role keys or provider secrets in client-side bundles.
+
+Do not claim end-to-end encryption unless an appropriate protocol has been implemented and reviewed.
+
+## 8. Messaging and social functionality
+
+Verify the full lifecycle of:
+- Sending and retrieving messages.
+- Message requests and acceptance.
+- Group membership and permissions.
+- Replies and reactions.
+- Attachments and previews.
+- GIF integration, where configured.
+- Posts, comments, likes, follows, and reshares.
+- Notifications and failure recovery.
+
+Enforce access controls in the backend, not merely by hiding buttons in the frontend.
+
+Do not fabricate delivery, read, or presence indicators when the required data is unavailable.
+
+Use appropriate idempotency and validation for operations that might be repeated.
+
+## 9. Campus Life engineering
+
+Keep the multiplayer world lightweight and use Phaser 3 as planned.
+
+Implement and test:
+- Movement and collision.
+- Room entry and exit.
+- Presence and movement synchronisation.
+- Room access policies.
+- Chat and emotes.
+- Classroom roles.
+- Host controls.
+- Speaker approval and raise-hand actions.
+- Upload permissions for classroom materials.
+- Connection recovery.
+
+Do not persist every movement keypress to PostgreSQL.
+
+Use an appropriate real-time transport and sensible update frequency. Handle disconnects, stale presence, and reconnection.
+
+For voice, evaluate a suitable provider only after checking current free-tier availability, usage terms, configuration, and potential costs. Never simulate a real voice connection and claim it is working.
+
+## 10. Authentication, SMS, and Premium
+
+For authentication:
+- Verify real provider responses.
+- Apply rate limits and abuse protections.
+- Keep development-only authentication clearly separated from production.
+- Never claim an SMS was sent unless the configured provider confirms success.
+
+For Premium:
+- Do not invent prices.
+- Do not charge users without approval.
+- Verify payment events on the server.
+- Do not trust a client-provided premium flag.
+- Apply entitlements through trusted backend logic.
+- Validate webhook authenticity and repeated event handling.
+
+Keep the free experience useful.
+
+## 11. Frontend quality
+
+The frontend must:
+- Match the approved reference register.
+- Preserve the Night Culture identity.
+- Support dark and light themes.
+- Adapt deliberately to desktop, Android, and iPhone layouts.
+- Handle safe areas and keyboard resizing.
+- Support keyboard navigation and visible focus.
+- Provide meaningful loading, empty, error, offline, and success states.
+- Avoid horizontal overflow and overlapping controls.
+- Respect reduced-motion settings.
+- Avoid unnecessary dependencies and expensive rendering.
+
+Do not settle for a page that only looks good in one screenshot.
+
+## 12. Testing protocol
+
+For each feature:
+1. Define acceptance criteria.
+2. Inspect the existing implementation.
+3. Implement the smallest sensible change.
+4. Run relevant unit or integration tests.
+5. Run type checks, linting, and build checks where available.
+6. Inspect the rendered UI when browser access is available.
+7. Test failure paths and permissions.
+8. Verify no unrelated feature regressed.
+9. Update the status and remaining-work checklist.
+
+Test at desktop, narrow desktop, Android-sized mobile, iPhone-sized mobile, and tablet sizes where relevant.
+
+Use realistic test accounts and isolated development data. Never expose real user information during testing.
+
+## 13. Free-plan discipline
+
+Optimise for limited agent usage:
+- Audit before editing.
+- Group closely related changes.
+- Avoid repeatedly regenerating unchanged components.
+- Keep a concise project status document.
+- Use targeted prompts with acceptance criteria.
+- Fix root causes rather than repeatedly patching symptoms.
+- Do not add paid tools without approval.
+
+When context or usage runs low, update the task checklist and document the exact next step so work can continue without rediscovery.
+
+## 14. Definition of done
+
+A feature is complete only when:
+- The intended user flow works.
+- The backend enforces required permissions.
+- Relevant validation and error handling exist.
+- The UI matches the approved design.
+- Relevant tests have been executed.
+- Regressions have been checked.
+- Remaining dependencies and limitations are documented.
+
+Use these status labels:
+- Not started.
+- In progress.
+- Implemented, not tested.
+- Tested.
+- Blocked.
+- Requires approval.
+
+## 15. Final report
+
+For each task, report:
+- Root cause or objective.
+- Files changed.
+- Behaviour implemented.
+- Tests run and actual results.
+- Security considerations.
+- Known defects.
+- Remaining work.
+- Any approval or external configuration required.
+
+Your goal is a maintainable, verifiably functioning GHETTO APP—not simply a larger codebase or a visually impressive demo.

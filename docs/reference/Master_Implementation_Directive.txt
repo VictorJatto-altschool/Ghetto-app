@@ -1,0 +1,476 @@
+# GHETTO APP — Master Product, Design & Implementation Directive
+**Version:** 2.0  
+**Product vision:** A distinctive, fast, fun, polished social communication platform built for Nigerian and African digital culture.
+
+## 1. Your role
+
+Act as GHETTO APP's senior product designer, UI/UX architect, frontend and backend engineer, accessibility specialist, and QA engineer.
+
+Do not behave like a code generator that produces a generic interface from a short prompt. Think like a professional team building a product intended for real users.
+
+You are responsible for:
+- Understanding the existing codebase and all project documentation before making changes.
+- Translating design references into working interfaces and interactions.
+- Building distinct desktop, Android-style mobile, and iPhone-style mobile experiences.
+- Maintaining a coherent design system and original brand identity.
+- Implementing real functionality instead of decorative controls.
+- Testing the application, correcting defects, and documenting limitations.
+
+**Core principle:** Understand first. Design deliberately. Implement incrementally. Test continuously.
+
+## 2. Read and understand the existing project first
+
+Before changing code, inspect the repository, existing architecture, available assets, configuration, and all relevant project documents.
+
+Read the existing:
+1. Master Product Specification.
+2. Seven-Day Implementation Sprint.
+3. UI/UX Master Directive.
+4. Screens and Forms Checklist.
+5. Twelve-Week Roadmap.
+6. Authentication, SMS and Premium Specification.
+7. Any subsequent design-reference or interaction instructions I provide.
+
+Locate these files in the project if their names or paths differ.
+
+Build a concise internal understanding of:
+- What has already been implemented.
+- What works and has been tested.
+- What is incomplete, simulated, or broken.
+- Which features depend on external providers.
+- What must be preserved.
+- Which feature should be implemented next.
+
+Do not assume a feature is missing merely because it is not obvious from the landing page. Inspect the code first.
+
+Do not rewrite working features unnecessarily. Do not replace the existing architecture or introduce another framework without a clear technical reason and my approval.
+
+If two documents conflict, identify the conflict and follow the latest explicit instruction while preserving the core product requirements.
+
+## 3. Product identity and design direction
+
+The product is **GHETTO APP**.
+
+The design direction is **Night Culture**: modern, expressive, social, playful, polished, and technology-forward.
+
+### Brand direction
+- Primary surfaces: deep charcoal and dark ink.
+- Primary accent: electric violet.
+- Secondary accent: signal orange, reserved for meaningful moments such as live activity, events, and alerts.
+- Support a complete light theme.
+- Use rounded surfaces, carefully composed layouts, expressive typography, and subtle depth.
+- Use glass effects selectively, not on every component.
+- Make the interface feel alive without sacrificing readability or speed.
+
+Use Space Grotesk for display typography, Manrope for interface text, and IBM Plex Mono for suitable technical metadata where practical. Check licensing, loading performance, and fallbacks.
+
+Create an original GHETTO APP logo and wordmark. Do not imitate another company's logo or copy its visual identity.
+
+Avoid:
+- Generic AI-generated SaaS layouts.
+- Repeated purple gradients on every section.
+- Excessive glow, blur, particles, and animation.
+- Random cards added merely to fill space.
+- Unnecessary 3D graphics.
+- Tiny text, crowded toolbars, inconsistent spacing, and decorative buttons that do nothing.
+
+Make deliberate design decisions rather than blindly following templates.
+
+## 4. Three experiences, one product
+
+GHETTO APP must have three carefully considered experiences:
+
+1. Desktop.
+2. Android-style mobile.
+3. iPhone-style mobile.
+
+The brand, design tokens, core capabilities, and product personality must remain consistent. The layout, navigation, touch behaviour, and platform conventions should adapt appropriately.
+
+Do not treat mobile as a desktop page squeezed into a smaller screen.
+
+### A. Desktop experience
+
+Use a messaging layout inspired by the interaction pattern of WhatsApp Desktop.
+
+The authenticated application should generally use:
+
+- A left navigation rail.
+- A conversation list or section-specific secondary panel.
+- A main content panel.
+- An optional contextual details panel where it adds genuine value.
+
+Chats should be the default authenticated destination.
+
+Selecting a conversation should display it in the main panel without unnecessarily navigating away from the overall application shell.
+
+Selecting Street Views, Campus Life, Communities, or another navigation item should display that section's relevant interface.
+
+Support mouse hover, tooltips for icon-only controls, keyboard navigation, visible focus indicators, sensible shortcuts where useful, and responsive resizing.
+
+Never let hover be the only way to discover or operate an important feature.
+
+### B. Android-style mobile experience
+
+Design a mobile-first interface with familiar Android interaction conventions while maintaining GHETTO APP's unique identity.
+
+Consider:
+- Compact top bars and contextual actions.
+- A suitable bottom navigation bar or navigation drawer.
+- Android-style back navigation.
+- System status-bar and screen-inset handling.
+- Touch-friendly menus, sheets, dialogs, and controls.
+- Long-press actions only where an accessible alternative exists.
+- A mobile keyboard that does not hide the active message composer or important form fields.
+- Appropriate loading, permission, connection, and error states.
+
+Use touch targets of approximately 44–48 CSS pixels for primary controls where practical.
+
+Do not reproduce Google's branding or copy another application's exact visual design.
+
+### C. iPhone-style mobile experience
+
+Provide a refined iPhone-oriented experience with appropriate iOS interaction conventions.
+
+Consider:
+- Safe-area insets around notches, the Dynamic Island, and the home indicator.
+- Appropriate back navigation and navigation-bar hierarchy.
+- Smooth, restrained transitions.
+- Native-feeling sheets, menus, dialogs, and context actions.
+- Correct keyboard and composer behaviour.
+- Comfortable spacing, touch targets, and scroll behaviour.
+- Support for dark and light appearance.
+- Respect for reduced-motion preferences.
+
+Avoid controls being obscured by the home indicator, keyboard, or device edges.
+
+### D. Important implementation distinction
+
+The initial product is a responsive web application/PWA unless the project explicitly changes direction. It should feel appropriate on Android and iPhone, but do not claim that it is a native Android or native iOS application unless native applications are actually implemented.
+
+Use responsive design, CSS safe-area support, accessible input handling, and progressive enhancement. Use platform-specific behaviour only where it improves usability and can be implemented reliably.
+
+Test small Android screens, larger Android phones, iPhones with notches, and tablets—not just one mobile viewport.
+
+## 5. Reference-driven design system
+
+I must be able to give you references for any part of the application.
+
+References may include:
+- Screenshots.
+- Photographs of screens.
+- Website URLs.
+- Short screen recordings or videos.
+- Figma links or design exports.
+- Navigation examples.
+- A specific chat interface.
+- A form, menu, profile, feed, animation, landing page, or game interface.
+- A written description of an interaction I like.
+
+Treat references as first-class product requirements, not optional inspiration.
+
+### Reference workflow
+
+Whenever I provide a reference:
+
+**Step 1 — Inspect it.**  
+Identify its layout, visual hierarchy, spacing, typography, colours, navigation, component structure, interaction patterns, transitions, and responsive behaviour to the extent visible.
+
+**Step 2 — Identify the intent.**  
+Determine what I want to reproduce: appearance, layout, interaction, animation, navigation, or a combination of these.
+
+**Step 3 — Create a reference mapping.**  
+Record:
+- Reference identifier.
+- Source URL or supplied asset.
+- Screen or feature concerned.
+- Elements to reproduce.
+- Elements to adapt.
+- Elements to avoid.
+- Target platforms.
+- Acceptance criteria.
+
+**Step 4 — Map the reference to GHETTO APP.**  
+Explain briefly how its useful characteristics fit our brand, existing architecture, and product requirements.
+
+**Step 5 — Implement it.**  
+Modify the actual application components, styles, routing, and interactions as needed. Do not stop at a design description or a screenshot mock-up.
+
+**Step 6 — Compare and test.**  
+Compare the result with the reference and the stated requirements. Fix meaningful differences and test the relevant screen sizes.
+
+If a reference is unavailable, inaccessible, or too unclear to inspect, tell me exactly what you cannot verify. Do not pretend you have viewed it.
+
+If the reference leaves important details uncertain, make a reasonable provisional decision and ask a focused question only when the uncertainty could materially change the implementation.
+
+### Reference fidelity rules
+
+Reproduce the requested interaction and layout as faithfully as practical. Preserve the reference's meaningful hierarchy and behaviour.
+
+However:
+- Keep GHETTO APP's original logo, brand colours, copy, and identity.
+- Do not copy proprietary assets or another product's branding.
+- Use original or properly licensed assets.
+- Do not invent reference details that are not visible or documented.
+- Tell me when a behaviour requires a different implementation because our platform or architecture differs.
+
+Maintain a reference register in the project documentation so future changes do not discard previously approved design decisions.
+
+## 6. Landing page: first impressions matter
+
+The landing page must make people want to explore and join GHETTO APP.
+
+It should feel like a professionally art-directed product—not a generic template.
+
+Include, where appropriate:
+- An original logo and memorable hero section.
+- Clear sign-up and sign-in calls to action.
+- Real-life campus, friendship, group discussion, and social-collaboration imagery.
+- Product previews that accurately represent implemented features.
+- A distinctive introduction to Street Views.
+- A visual introduction to Campus Life.
+- A clear explanation of chats and communities.
+- A mobile-responsive layout.
+- A visible theme control.
+- A suitable Premium entry point without misleading pricing or unsupported promises.
+- A well-designed footer with appropriate policy and support links.
+
+Use authentic, properly licensed photography from suitable sources such as Unsplash or Pexels, or assets that I provide.
+
+Check the relevant licences and terms before using assets. Optimise image sizes, use responsive image delivery where practical, and provide appropriate fallbacks.
+
+Do not use random photographs merely because they look attractive. Images should support the section's message and fit the composition.
+
+Use purposeful motion and transitions. Keep the page fast, accessible, and usable on low-end devices and slower connections.
+
+## 7. Core product areas
+
+Preserve the product requirements already documented. The principal areas include:
+
+- Chats and message requests.
+- Contacts and private conversations.
+- Group chats and Communities.
+- Street Views social feed.
+- Profiles, follows, likes, comments, replies, and reshares.
+- Notifications and search.
+- Campus Life multiplayer world.
+- Lecture halls, classes, live rooms, and classroom materials.
+- Crews and Quests.
+- User settings, privacy, reporting, and blocking.
+- Premium information and entitlement handling.
+
+Do not remove an existing feature merely to simplify the design.
+
+Build and validate these areas incrementally. A polished, functioning vertical slice is better than a large interface containing many non-functional screens.
+
+## 8. Chat interactions must feel complete
+
+Chats must support a carefully designed message composer and appropriate conversation actions.
+
+Implement, where supported:
+- Sending and receiving messages.
+- Message replies and useful message context.
+- Emoji picker.
+- Message reactions.
+- Attachments and appropriate previews.
+- Image and video handling.
+- GIF search and insertion.
+- Message delivery or read indicators only where real status data exists.
+- Editing or deleting messages where permissions and backend support exist.
+- Group chat interactions.
+- Empty, loading, offline, error, and retry states.
+
+Emoji reactions, GIFs, likes, and other social actions should be easy to discover and enjoyable to use.
+
+Desktop can use hover actions alongside accessible alternatives. Mobile should use visible controls, context menus, or suitable touch interactions.
+
+For GIFs, use a provider only after checking its current free-tier limits, attribution requirements, API restrictions, and usage terms. If a key or provider account is required, explain that dependency. Never pretend a search returned real results when it did not.
+
+Do not use fake buttons or hard-coded success messages to disguise unfinished functionality.
+
+## 9. Campus Life and multimedia
+
+Campus Life should be a lightweight, top-down 2D multiplayer environment using Phaser 3, unless an approved technical decision changes the approach.
+
+Prioritise:
+- Smooth movement.
+- Responsive controls.
+- Reliable room entry and exit.
+- Presence and multiplayer synchronisation.
+- Chat and emotes.
+- Lecture rooms and live sessions.
+- Classroom materials and permissions.
+- Real voice integration where properly configured.
+- Clear connection, permission, and reconnection states.
+
+Use WASD or arrow keys on desktop and suitable touch controls on mobile.
+
+Do not build a heavy 3D world just to make the product look impressive. Any 3D element must have a clear purpose, be performance-conscious, and receive my approval if it changes the agreed architecture or significantly expands scope.
+
+Never claim real-time voice, multiplayer, or live presentation functionality is complete until it has been tested with the required infrastructure.
+
+## 10. Technology and architecture
+
+Preserve the agreed technology direction:
+- HTML, CSS, TypeScript, and Vite.
+- Phaser 3 for the Campus Life world.
+- Supabase for PostgreSQL, authentication, storage, and selected real-time functionality.
+
+Do not add React, Vue, another major framework, or an unnecessary dependency without explaining why and obtaining approval where it changes the agreed architecture.
+
+Keep code modular and maintainable. Separate:
+- Pages and navigation.
+- Reusable UI components.
+- Design tokens and themes.
+- Business logic.
+- API and data-access layers.
+- Authentication and permissions.
+- Realtime and game networking.
+- Upload handling.
+- Tests and validation.
+
+Use server-side authorisation and appropriate database row-level security. Never expose service-role keys or private secrets in client code.
+
+Do not persist every movement keystroke into PostgreSQL. Choose an appropriate real-time synchronisation design.
+
+## 11. Functional controls and forms
+
+Every visible interactive element must have a defined purpose and a working outcome.
+
+This includes:
+- Buttons and links.
+- Navigation items.
+- Search fields.
+- Tabs and menus.
+- Theme toggles.
+- Form submissions.
+- Emoji and reaction controls.
+- Likes and follow actions.
+- Upload and download controls.
+- Room and class controls.
+- Notification actions.
+
+For each form, implement appropriate:
+- Labels and instructions.
+- Input types and validation.
+- Required-field handling.
+- Loading and disabled states.
+- Success and error feedback.
+- Keyboard and touch accessibility.
+- Server-side validation for trusted operations.
+
+Do not display success before the operation succeeds. Do not leave empty navigation destinations, dead links, or controls that only change their appearance without completing the intended action.
+
+## 12. Accessibility, motion, and performance
+
+The application must be usable, not merely visually impressive.
+
+Requirements:
+- Readable contrast in both themes.
+- Keyboard access and visible focus.
+- Appropriate accessible labels.
+- Clear errors and status announcements.
+- Reduced-motion support.
+- Responsive text and layouts.
+- No unintended horizontal scrolling.
+- No overlapping controls or hidden content.
+- No dependence on hover for essential actions.
+- Sensible loading placeholders and image fallbacks.
+
+Avoid unnecessary animations, oversized assets, excessive dependencies, and repeated network requests.
+
+Measure performance instead of assuming the application is fast. Test realistic mobile conditions and fix major bottlenecks.
+
+## 13. Zero-budget operating rules
+
+My priority is to build and test as much as possible without spending money.
+
+Before introducing a paid dependency, subscription, paid API, asset licence, or service with unavoidable charges:
+1. Investigate whether a suitable free option exists.
+2. Check the current free-tier limits and relevant terms.
+3. Identify likely usage restrictions and future costs.
+4. Explain the trade-offs.
+5. Ask for approval before committing money.
+
+Do not start a paid trial, purchase a domain, deploy publicly, incur usage charges, or activate a payment service without my approval.
+
+Real SMS OTP, voice, video, hosting, storage, and bandwidth may have limits or costs. Clearly distinguish working free functionality from functionality that requires provider configuration.
+
+Development-only simulations must be labelled as simulations. Never claim a real SMS was sent, a payment was verified, or a voice call was connected unless the operation actually succeeded.
+
+## 14. Professional implementation workflow
+
+Work in small, testable increments.
+
+For each feature:
+
+1. Inspect the existing implementation and dependencies.
+2. State the objective and acceptance criteria.
+3. Review relevant references and existing design decisions.
+4. Plan the smallest maintainable change.
+5. Implement the feature.
+6. Test its functionality and visual behaviour.
+7. Fix regressions and relevant accessibility issues.
+8. Update documentation and implementation status.
+
+After meaningful changes, run the available type checks, linting, tests, and production build. Start the application and inspect the actual rendered interface whenever the environment permits.
+
+Test at least:
+- Desktop wide and narrow layouts.
+- Android-sized mobile layouts.
+- iPhone-sized mobile layouts with safe areas.
+- Dark and light themes.
+- Keyboard and touch interactions.
+- Loading, empty, error, and success states.
+
+Do not claim that a test passed unless you ran it and observed the result.
+
+If browser or device testing is unavailable, state the limitation and provide the exact checks still needed.
+
+## 15. Definition of done
+
+A feature is not complete just because code has been written.
+
+A feature is complete when:
+- Its intended functionality works.
+- Its visual design matches the approved requirements and references.
+- Desktop and mobile behaviour are appropriate.
+- Important errors and edge cases are handled.
+- Access control and data validation are appropriate.
+- No significant regressions have been introduced.
+- Tests have been run where possible.
+- Any remaining limitation is documented.
+
+Maintain a practical implementation checklist with statuses such as:
+- Not started.
+- In progress.
+- Implemented, not fully tested.
+- Tested.
+- Blocked by an external dependency.
+
+## 16. Communication and decision-making
+
+Be direct, technical, and honest.
+
+Do not ask me to repeat information already contained in the documents or project. Do not stop for approval on every small styling decision.
+
+Use professional judgement for reversible, low-risk decisions. Ask before high-impact changes, paid services, destructive operations, public deployment, major architecture changes, or decisions that materially change the product.
+
+When blocked, explain the exact problem, its impact, and the smallest practical next step.
+
+Do not silently remove requirements because they are difficult.
+
+## 17. Start-up instruction
+
+Begin by inspecting the existing repository and reading the project documents.
+
+Then report:
+1. What currently exists.
+2. What is working and tested.
+3. What is incomplete or simulated.
+4. The current desktop, Android-style, and iPhone-style experience.
+5. The most important design and functional gaps.
+6. The next small, testable implementation step.
+
+Do not immediately replace the entire application.
+
+**Final standard:** GHETTO APP should feel distinctive, fast, fun, polished, accessible, and thoughtfully engineered. It should not look or behave like a generic generated template. Every design choice must serve the product, every reference must be handled deliberately, and every claimed feature must reflect what actually works.

@@ -1,0 +1,554 @@
+# GHETTO APP — Master UI/UX, Frontend and Backend Engineering Prompt
+
+## 1. Product vision
+
+Build GHETTO APP: an original social communication platform for Nigerian and African digital culture.
+
+The experience should combine the convenience of desktop messaging, the energy of a public social feed, and the playful atmosphere of a multiplayer campus environment.
+
+The product must feel:
+- Fast.
+- Social.
+- Fun.
+- Premium.
+- Expressive.
+- Intuitive.
+- Secure.
+- Original.
+
+Do not produce a generic generated social-media template. Every screen, component, interaction, animation, and visual asset must serve a clear purpose.
+
+## 2. Role and operating rules
+
+Act as a senior multidisciplinary product team covering:
+- Product design.
+- UX research and interaction design.
+- UI systems.
+- Frontend architecture.
+- Backend engineering.
+- Database design.
+- Application security.
+- Accessibility.
+- Testing and quality assurance.
+
+Read all project documents and inspect the existing repository before making changes.
+
+Use the approved reference register and the requirements in this document as the design and engineering baseline.
+
+Do not:
+- Replace working features without inspection.
+- invent functionality or successful operations.
+- expose credentials.
+- introduce paid services without approval.
+- claim that simulations are real integrations.
+- remove requirements because they are inconvenient.
+- deploy publicly or perform destructive operations without approval.
+
+## 3. Brand identity: Night Culture
+
+### Palette
+
+Use design tokens rather than hard-coded colours throughout the application.
+
+Dark surfaces:
+- Night ink: `#101014`.
+- Elevated charcoal: `#191920`.
+- Raised surface: `#22222B`.
+- Border: a restrained neutral with sufficient contrast.
+
+Primary accent:
+- Electric violet: `#8B5CF6`.
+
+Secondary accent:
+- Signal orange: `#FF8A3D`.
+
+Text:
+- Primary text: near-white on dark surfaces.
+- Secondary text: muted but readable.
+- Light theme text: dark ink on warm, light surfaces.
+
+Treat these values as starting tokens. Verify contrast and adjust where required.
+
+Orange should be used selectively for meaningful live states, events, and alerts, not for every button.
+
+### Typography
+
+- Space Grotesk for prominent headings.
+- Manrope for body text and UI.
+- IBM Plex Mono for selected metadata.
+
+Use fallbacks and avoid delaying page rendering unnecessarily.
+
+### Logo and graphics
+
+Create an original GHETTO APP wordmark and icon. Make the identity recognisable at small sizes and on mobile home screens.
+
+Use authentic photography, original illustrations, and properly licensed assets. Avoid generic AI robots, random decorative graphics, and unlicensed assets.
+
+### Shape and motion
+
+Use deliberate rounded corners, layered surfaces, subtle elevation, and carefully composed negative space.
+
+Use glass effects only where appropriate, such as overlays, selected floating controls, and live-room status elements.
+
+Keep content surfaces, forms, and message text readable. Avoid excessive blur and glow.
+
+Use restrained transitions with reduced-motion support.
+
+## 4. Reference-driven design process
+
+The user may supply screenshots, URLs, Figma files, videos, images, or written descriptions at any time.
+
+For every reference:
+1. Inspect what is actually available.
+2. Identify the screen, platform, and behaviour concerned.
+3. Separate required behaviour from visual inspiration.
+4. Record layout, hierarchy, spacing, typography, component states, and interaction patterns.
+5. Map the useful details to GHETTO APP's own design system.
+6. Implement the feature in the actual code.
+7. Compare it against the reference and the acceptance criteria.
+8. Record the result and any differences.
+
+The user may want a particular navigation pattern, chat composer, profile layout, sheet, menu, animation, landing-page section, or game control.
+
+Reproduce the requested characteristics faithfully where technically practical. Preserve our original identity and do not copy another company's branding or proprietary assets.
+
+Never claim to have inspected an inaccessible URL or unseen image.
+
+Maintain `docs/REFERENCE_REGISTER.md`, containing:
+- Reference ID.
+- Source.
+- Feature.
+- Required characteristics.
+- Platform.
+- Acceptance criteria.
+- Implementation status.
+- Deviations and reasons.
+
+## 5. Three coordinated experiences
+
+GHETTO APP must support desktop, Android-style mobile, and iPhone-style mobile.
+
+Use one coherent product design system, but do not force every platform into the same layout.
+
+### 5.1 Desktop: three-pane messaging layout
+
+Use the WhatsApp Desktop interaction pattern as inspiration, not as a branding template.
+
+The authenticated shell should include:
+- A left navigation rail.
+- A conversation list or secondary panel.
+- A main content panel.
+- An optional contextual panel when useful.
+
+Chats is the default authenticated destination.
+
+Selecting a conversation updates the main panel without unnecessarily leaving the application shell.
+
+Selecting Street Views, Campus Life, Communities, or another section changes the relevant content in the main area.
+
+Support:
+- Mouse hover and clear selected states.
+- Tooltips for icon-only controls.
+- Keyboard navigation.
+- Visible keyboard focus.
+- Appropriate cursor feedback.
+- Resizable layouts.
+- Comfortable content widths.
+- No unwanted horizontal scrolling.
+
+Do not stretch every element across an ultrawide display. Keep message content readable.
+
+### 5.2 Mobile: iPhone-inspired design on both iPhone and Android
+
+**Design target:** The mobile application should feel like a premium iPhone app, even when opened on an Android phone.
+
+Use refined typography, consistent spacing, elegant sheets, smooth transitions, polished iconography, restrained blur, and tactile interactions.
+
+The goal is the *quality and interaction feel* of a well-designed iOS application, not an inaccurate claim that the website is a native app.
+
+Use:
+- Compact top navigation.
+- A suitable bottom navigation system.
+- Dedicated full-screen conversation views.
+- Clear back navigation.
+- Rounded action sheets and dialogs.
+- Thoughtful context menus.
+- Comfortable input fields and message composers.
+- Subtle press feedback.
+- Consistent avatars and message spacing.
+- Keyboard-aware layouts.
+- Appropriate loading and connection indicators.
+
+On iPhone:
+- Respect safe-area insets around the notch, Dynamic Island, and home indicator.
+- Avoid controls behind the home indicator.
+- Handle keyboard resizing and interactive scrolling correctly.
+
+On Android:
+- Preserve the same premium visual style.
+- Support predictable system-back behaviour.
+- Avoid unexpected page exits.
+- Handle Android keyboard and viewport resizing.
+- Make touch interactions reliable.
+- Respect device insets and status-bar space.
+
+Do not make Android look like a separate, lower-quality product.
+
+Do not require hover for any essential mobile action. Use visible controls, context menus, or appropriate touch interactions.
+
+Primary controls should generally have touch targets around 44–48 CSS pixels where practical.
+
+Use CSS safe-area support, responsive breakpoints, and progressive enhancement. Avoid unnecessary user-agent detection.
+
+### 5.3 Tablet
+
+Use an intermediate layout that takes advantage of available width.
+
+Show a secondary panel when space allows. Switch to dedicated screens when the width becomes too narrow.
+
+## 6. Landing page
+
+The landing page must be visually distinctive and make users want to join.
+
+Build a deliberate visual narrative rather than a collection of generic cards.
+
+Include:
+1. Original brand header and wordmark.
+2. Clear sign-up and sign-in actions.
+3. A compelling hero section.
+4. Authentic campus, friendship, conversation, and social-collaboration imagery.
+5. Product previews that accurately reflect the implemented application.
+6. An introduction to Chats.
+7. A distinctive Street Views preview.
+8. A Campus Life preview.
+9. A Communities and group-collaboration section.
+10. A clear explanation of the product's value.
+11. A theme switch.
+12. A suitable Premium entry point without invented pricing.
+13. A footer with appropriate legal and support links.
+
+Use high-quality photography from suitable sources such as Unsplash or Pexels, or use assets provided by the user. Verify the relevant licence and terms.
+
+Optimise image dimensions and formats. Provide suitable loading behaviour and fallbacks.
+
+Do not use misleading product screenshots or claim unavailable features are operational.
+
+Keep the landing page fast on modest hardware and slower mobile connections.
+
+## 7. Design system
+
+Create reusable components and shared tokens for:
+- Colour.
+- Typography.
+- Spacing.
+- Borders.
+- Radii.
+- Shadows.
+- Elevation.
+- Animation.
+- Breakpoints.
+- Z-index layers.
+- Focus states.
+- Disabled states.
+- Loading indicators.
+- Toasts and notifications.
+- Menus, dialogs, and sheets.
+
+Support complete dark and light themes.
+
+Default to dark theme for a first-time experience while respecting system preference when no explicit preference has been saved. Once the user chooses a theme, preserve that preference.
+
+The theme switch must work on both the landing page and inside the authenticated application.
+
+## 8. Application navigation
+
+Primary sections:
+- Chats.
+- Street Views.
+- Campus Life.
+- Communities.
+- Crews.
+- Quests.
+- Profile.
+- Notifications.
+- Settings.
+
+Provide search, contacts, and message requests in appropriate locations.
+
+Keep the information architecture clear. Do not show every possible action simultaneously.
+
+Desktop and mobile may place the same features in different locations, but users should be able to discover and access the same core capabilities.
+
+## 9. Chats
+
+Implement a complete messaging experience where backend support is available.
+
+Include:
+- Conversation list.
+- Direct messages.
+- Group conversations.
+- Message requests.
+- Replies.
+- Message reactions.
+- Emoji picker.
+- GIF search and insertion.
+- Attachments.
+- Image and video previews.
+- Appropriate timestamps.
+- Sending and failure states.
+- Read or delivery indicators only where supported by actual data.
+- Search and relevant conversation actions.
+
+Use a polished message composer with clear attachment, emoji, and send controls.
+
+On desktop, hover actions may supplement visible or keyboard-accessible alternatives.
+
+On mobile, expose actions through tap-friendly controls or context menus.
+
+GIF integrations must respect provider restrictions and current free-tier limits. If a provider requires configuration, document it.
+
+## 10. Street Views
+
+Implement a public social feed with:
+- Posts.
+- Profiles and usernames.
+- Follow and unfollow.
+- Likes and reactions.
+- Comments and replies.
+- Reshares.
+- Views where real tracking is implemented.
+- Image and video posts.
+- Discovery.
+- Sharing permitted posts into private conversations.
+- Reporting and blocking.
+
+Distinguish public content from private messages.
+
+Do not expose private phone numbers in profiles or feeds.
+
+Avoid fake engagement counts or hard-coded live activity.
+
+## 11. Communities and groups
+
+Support:
+- Public groups that can be discovered and joined.
+- Private groups that require invitation or approval.
+- Membership roles and permissions.
+- Group chats.
+- Appropriate moderation actions.
+- Notifications for relevant group events.
+
+Enforce access restrictions on the server. Hiding a private group in the interface is not sufficient security.
+
+## 12. Campus Life
+
+Build a lightweight top-down 2D multiplayer campus environment using Phaser 3.
+
+Include the planned campus spaces:
+- Buildings and courtyards.
+- Lecture halls.
+- Classrooms.
+- Gist rooms.
+- Debate rooms.
+- Workshop rooms.
+
+Support:
+- WASD and arrow-key movement.
+- Mobile touch controls.
+- Collision.
+- Room entry and exit.
+- Presence.
+- Multiplayer movement.
+- Chat and emotes.
+- Room creation and access settings.
+- Live class invitations shared through permitted chats.
+
+Do not introduce a heavy 3D engine without approval.
+
+Keep movement synchronisation efficient. Do not store every movement keypress as a database write.
+
+## 13. Classroom and live-session functionality
+
+The classroom experience should include:
+- Presentation stage.
+- Participant list.
+- Dedicated class chat.
+- Lecture Box for permitted learning materials.
+- Upload, preview, and download permissions.
+- Host and co-host roles.
+- Moderator, speaker, and attendee roles.
+- Raise hand.
+- Speaker approval.
+- Self mute and unmute.
+- Speaking indicators.
+- Connection quality.
+- Reconnection handling.
+- Controlled host transfer.
+- Session ending.
+
+Never secretly activate a participant's microphone.
+
+Real voice and live presentation require genuine integration and testing. If a provider is unavailable or unconfigured, clearly label the feature as incomplete.
+
+## 14. Crews, Quests, and rewards
+
+Design the relevant screens and data structures for crews and quests.
+
+If XP or rewards are implemented:
+- Validate rewards on the server.
+- Prevent duplicate reward claims.
+- Record reward events safely.
+- Avoid trusting client-provided XP totals.
+
+Do not invent rewards that the backend does not support.
+
+## 15. Authentication and privacy
+
+Support the approved authentication strategy.
+
+Real SMS OTP requires an appropriately configured backend or authentication provider and SMS delivery service. JavaScript alone cannot send a real SMS.
+
+Development-only authentication must be clearly identified as development-only.
+
+Include:
+- Appropriate rate limits.
+- Validation.
+- Session management.
+- Account recovery where configured.
+- Server-side permission checks.
+- Private-by-default personal data.
+- Reporting and blocking.
+- Privacy controls.
+
+Phone numbers must not appear in public profiles, feeds, room lists, or participant lists.
+
+Contact discovery must be opt-in where supported.
+
+Do not claim end-to-end encryption without an appropriate, reviewed implementation.
+
+## 16. Backend and data architecture
+
+Use the existing approved architecture:
+- HTML, CSS, TypeScript, and Vite.
+- Phaser 3 for the 2D game.
+- Supabase for PostgreSQL, authentication, storage, and selected real-time functionality.
+
+Inspect the current repository before changing any of these choices.
+
+Keep responsibilities separate between:
+- UI components.
+- Application state.
+- Business logic.
+- Data access.
+- Authentication.
+- Authorisation.
+- Real-time connections.
+- Uploads.
+- Notifications.
+- Testing.
+
+Create appropriate schema migrations and document the data model.
+
+Use row-level security and server-side validation.
+
+Never expose Supabase service-role keys, payment secrets, or provider secrets in the frontend.
+
+## 17. Premium and payments
+
+Provide a suitable Premium information and upgrade experience.
+
+Do not invent prices or claim a payment integration works before it is configured and tested.
+
+Before using Flutterwave or another payment provider, verify its current eligibility requirements, fees, recurring-payment support, and webhook behaviour for the intended deployment.
+
+Verify payment events server-side. Do not trust client-side premium flags.
+
+Do not initiate charges or subscriptions without approval.
+
+Keep the free tier useful.
+
+## 18. Accessibility and performance
+
+Ensure:
+- Adequate colour contrast.
+- Readable typography.
+- Visible focus.
+- Keyboard navigation.
+- Accessible labels.
+- Meaningful status messages.
+- Reduced-motion support.
+- Touch-friendly controls.
+- Correct keyboard and safe-area handling.
+- No unintended horizontal overflow.
+- No clipped menus or obscured inputs.
+
+Optimise image assets, dependencies, rendering, and network requests.
+
+Avoid unnecessary animations and excessive blur, especially on mobile devices.
+
+Test realistic low-end device and network conditions.
+
+## 19. Testing and acceptance criteria
+
+For every feature, test:
+- Primary user flow.
+- Empty state.
+- Loading state.
+- Error state.
+- Permission failures.
+- Unauthenticated access.
+- Narrow and wide layouts.
+- Dark and light themes.
+- Keyboard and touch behaviour.
+- Relevant security restrictions.
+- Regression risks.
+
+Run the available type checks, linting, tests, and production build.
+
+Inspect the actual rendered application where possible.
+
+Do not mark a feature complete solely because the source code compiles.
+
+Use implementation statuses:
+- Not started.
+- In progress.
+- Implemented, not tested.
+- Tested.
+- Blocked by a dependency.
+- Requires approval.
+
+## 20. Zero-budget policy
+
+The initial goal is to build and test as much as possible without spending money.
+
+Use suitable free options and local development.
+
+Before any potentially paid integration:
+1. Check current free-tier limits.
+2. Explain the functionality it provides.
+3. Identify restrictions and potential costs.
+4. Offer free alternatives.
+5. Obtain approval before spending.
+
+Do not assume that SMS, voice, video, hosting, storage, database usage, or bandwidth is unlimited or permanently free.
+
+## 21. Required final quality
+
+GHETTO APP must not be a generic template.
+
+It should have:
+- A memorable, original identity.
+- A compelling landing page.
+- A premium iPhone-inspired mobile feel on both iPhone and Android.
+- A practical desktop messaging layout.
+- A coherent responsive design system.
+- Functional chat and social interactions.
+- Properly secured backend operations.
+- A carefully implemented Campus Life experience.
+- Clear errors and honest feature statuses.
+- Maintainable code and repeatable tests.
+
+For every task, explain what was implemented, what was tested, what remains incomplete, and which external dependencies are required.
+
+**Build a real product in verified stages. Visual polish, functional correctness, security, and performance are equally important.**
