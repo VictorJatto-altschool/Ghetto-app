@@ -13,9 +13,7 @@ type LocalPost = {
 
 const databaseName = 'ghetto-app-street-views-v1';
 const storeName = 'local-posts';
-const maxImageBytes = 8 * 1024 * 1024;
 const maxVideoBytes = 100 * 1024 * 1024;
-const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const allowedVideoTypes = new Set(['video/mp4', 'video/webm']);
 
 function escapeHtml(value: string): string {
@@ -44,7 +42,7 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
 
 class StreetViewsScreen {
   private posts: LocalPost[] = [];
-  private filter: Audience | 'all' | 'videos' | 'posts' = 'videos';
+  private filter: Audience | 'all' = 'all';
   private pendingMedia: File | null = null;
   private mediaUrl: string | null = null;
   private composerOpen = false;
@@ -131,11 +129,9 @@ class StreetViewsScreen {
   }
 
   private visiblePosts(): LocalPost[] {
-    let filtered = this.posts;
+    let filtered = this.posts.filter((post) => (post.mediaType ?? (post.image ? 'image' : 'text')) === 'video');
     if (this.filter === 'public' || this.filter === 'followers') filtered = filtered.filter((post) => post.audience === this.filter);
-    if (this.filter === 'videos') filtered = filtered.filter((post) => (post.mediaType ?? (post.image ? 'image' : 'text')) === 'video');
-    if (this.filter === 'posts') filtered = filtered.filter((post) => (post.mediaType ?? (post.image ? 'image' : 'text')) !== 'video');
-    return this.filter === 'all' ? [...filtered].sort((a, b) => Number((b.mediaType ?? (b.image ? 'image' : 'text')) === 'video') - Number((a.mediaType ?? (a.image ? 'image' : 'text')) === 'video') || b.createdAt.localeCompare(a.createdAt)) : filtered;
+    return [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   private renderPost(post: LocalPost): string {
@@ -144,7 +140,7 @@ class StreetViewsScreen {
     const videoUrl = mediaBlob && mediaType === 'video' ? this.createImageUrl(mediaBlob) : '';
     const image = mediaBlob && mediaType !== 'video' ? `<figure class="street-post-media"><img src="${this.createImageUrl(mediaBlob)}" alt="Attached preview: ${escapeHtml(post.imageName)}"><figcaption>${escapeHtml(post.imageName)} · stored on this device</figcaption></figure>` : '';
     const date = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(post.createdAt));
-    if (mediaType === 'video' && videoUrl) return `<article class="street-post street-video-post"><div class="street-video-stage"><video src="${videoUrl}" playsinline muted loop autoplay preload="none" controls aria-label="Street Views video by ${escapeHtml(this.authorName())}"></video><button class="video-sound-button" type="button" data-toggle-video-sound aria-pressed="false" aria-label="Turn video sound on">${this.soundIcon(false)}</button><div class="street-video-overlay"><header class="street-post-head"><span class="street-avatar">${escapeHtml(this.authorName().slice(0, 1).toUpperCase())}</span><div class="street-author"><strong>${escapeHtml(this.authorName())}</strong><span>${escapeHtml(date)} · LOCAL ONLY</span></div><span class="audience-chip">${post.audience === 'public' ? 'PUBLIC INTENT' : 'FOLLOWERS INTENT'}</span><button class="delete-post" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="Delete local video preview">×</button></header><div class="street-video-caption">${post.body ? `<p>${escapeHtml(post.body).replace(/\n/g, '<br>')}</p>` : ''}${post.campus ? `<span>${escapeHtml(post.campus)}</span>` : ''}</div><span class="street-video-device-tag">VIDEO · SAVED ON THIS DEVICE</span></div></div></article>`;
+    if (mediaType === 'video' && videoUrl) return `<article class="street-post street-video-post"><div class="street-video-stage"><video src="${videoUrl}" playsinline muted loop autoplay preload="none" aria-label="Street Views video by ${escapeHtml(this.authorName())}"></video><button class="video-play-button" type="button" data-toggle-video-play aria-label="Pause video">Ⅱ</button><button class="video-sound-button" type="button" data-toggle-video-sound aria-pressed="false" aria-label="Turn video sound on">${this.soundIcon(false)}</button><div class="street-video-overlay"><header class="street-post-head"><span class="street-avatar">${escapeHtml(this.authorName().slice(0, 1).toUpperCase())}</span><div class="street-author"><strong>${escapeHtml(this.authorName())}</strong><span>${escapeHtml(date)} · LOCAL ONLY</span></div><span class="audience-chip">${post.audience === 'public' ? 'PUBLIC INTENT' : 'FOLLOWERS INTENT'}</span><button class="delete-post" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="Delete local video preview">×</button></header><div class="street-video-caption">${post.body ? `<p>${escapeHtml(post.body).replace(/\n/g, '<br>')}</p>` : ''}${post.campus ? `<span>${escapeHtml(post.campus)}</span>` : ''}</div><span class="street-video-device-tag">VIDEO · SAVED ON THIS DEVICE</span></div></div></article>`;
     return `<article class="street-post"><header class="street-post-head"><span class="street-avatar">${escapeHtml(this.authorName().slice(0, 1).toUpperCase())}</span><div class="street-author"><strong>${escapeHtml(this.authorName())}</strong><span>${escapeHtml(date)} · LOCAL ONLY</span></div><span class="audience-chip">${post.audience === 'public' ? 'PUBLIC INTENT' : 'FOLLOWERS INTENT'}</span><button class="delete-post" type="button" data-delete-post="${escapeHtml(post.id)}" aria-label="Delete local post preview">×</button></header><p class="street-post-copy">${escapeHtml(post.body).replace(/\n/g, '<br>')}</p>${post.campus ? `<p class="street-campus-tag">${escapeHtml(post.campus)}</p>` : ''}${image}<footer class="street-post-foot"><span>PREVIEW ON THIS DEVICE · NOT SHARED</span><span>${post.body.length} characters</span></footer></article>`;
   }
 
@@ -156,13 +152,13 @@ class StreetViewsScreen {
     const author = this.authorName();
     if (this.pendingMedia) this.mediaUrl = this.createImageUrl(this.pendingMedia);
     const previewMedia = this.pendingMedia ? `<div class="attachment-preview">${this.pendingMedia.type.startsWith('video/') ? `<video src="${this.mediaUrl ?? ''}" muted playsinline controls></video>` : `<img src="${this.mediaUrl ?? ''}" alt="Selected image preview">`}<div><strong>${escapeHtml(this.pendingMedia.name)}</strong><span>${(this.pendingMedia.size / (1024 * 1024)).toFixed(1)} MB · stays on this device</span></div><button type="button" data-clear-media aria-label="Remove selected media">×</button></div>` : '';
-    const composer = this.composerOpen ? `<form class="street-composer" id="street-composer"><div class="composer-intro"><span class="street-avatar">${escapeHtml(author.slice(0, 1).toUpperCase())}</span><div><strong>Start a Street View</strong><span>Your post preview is private to this browser.</span></div></div><label class="street-body-label" for="street-body"><span class="visually-hidden">Post caption</span><textarea id="street-body" name="body" rows="3" maxlength="5000" placeholder="Write a caption…" aria-describedby="street-compose-note">${escapeHtml(this.draftBody)}</textarea></label><div class="street-compose-options"><label>Audience intent<select name="audience"><option value="public" ${this.draftAudience === 'public' ? 'selected' : ''}>Public post</option><option value="followers" ${this.draftAudience === 'followers' ? 'selected' : ''}>Followers only</option></select></label><label>Campus tag <input name="campus" maxlength="80" placeholder="Optional campus or community" value="${escapeHtml(this.draftCampus)}"></label></div>${previewMedia}<div class="street-compose-actions"><label class="media-picker">＋ Add video or image<input id="street-media" type="file" accept="video/mp4,video/webm,image/jpeg,image/png,image/webp,image/gif" hidden></label><span id="street-character-count">${this.draftBody.length} / 5000</span><button class="street-submit" type="submit" ${this.error || this.loading || this.saving ? 'disabled' : ''}>Save local preview</button></div><p class="street-compose-note" id="street-compose-note">Videos play in your local feed. Nothing is uploaded, published or synced.</p></form>` : '';
-    const filterButtons: Array<[typeof this.filter, string]> = [['videos','Videos'],['all','For you'],['posts','Posts'],['public','Public'],['followers','Followers']];
-    this.root.innerHTML = `<section class="views-overlay" aria-labelledby="views-title">
-      <header class="views-header"><div><button class="views-back" id="views-back" type="button" aria-label="Back to chats">← <span>Back to chats</span></button><p class="eyebrow">STREET VIEWS · VIDEO FIRST</p><h1 id="views-title">Your campus, in motion.</h1><p>Short videos lead the feed. Swipe through your local previews.</p></div><div class="views-header-actions"><span class="views-status"><i></i> DEVICE ONLY</span><button class="views-create" id="toggle-street-composer" type="button">＋ Create post</button></div></header>
-      <div class="views-content"><div class="views-feed-column">${composer}<div class="street-feed-heading"><div><p class="eyebrow">YOUR FEED</p><h2>${this.filter === 'videos' ? 'Videos' : this.filter === 'posts' ? 'Posts' : 'Street Views'}</h2></div><span>${this.posts.length} saved</span></div><div class="street-filters" role="group" aria-label="Filter Street Views">${filterButtons.map(([filter,label]) => `<button type="button" data-filter="${filter}" class="${this.filter === filter ? 'is-active' : ''}">${label}</button>`).join('')}</div>
-        <div class="street-post-list ${posts.some((post) => (post.mediaType ?? (post.image ? 'image' : 'text')) === 'video') ? 'has-video-posts' : ''}" aria-live="polite">${this.error ? `<div class="street-empty street-error"><span>!</span><h3>Local storage unavailable</h3><p>${escapeHtml(this.error)}</p><button type="button" data-retry>Try again</button></div>` : this.loading ? `<div class="street-empty"><span>…</span><h3>Loading your feed</h3><p>Reading previews saved in this browser.</p></div>` : posts.length ? posts.map((post) => this.renderPost(post)).join('') : `<div class="street-empty"><span>▶</span><h3>${this.filter === 'videos' ? 'No videos yet' : 'Your feed is ready'}</h3><p>${this.filter === 'videos' ? 'Create a short video post and it will lead your feed.' : 'Create a video to start your Street Views feed. Text and photo posts appear after videos.'}</p><button type="button" id="empty-create-post">＋ Create a post</button></div>`}</div></div>
-        <aside class="views-side"><div class="views-side-mark">▶</div><p class="eyebrow">VIDEO-FIRST FEED</p><h2>Catch the moment.</h2><p>Videos lead your For You feed. Photos and text stay in their own Posts tab. Your drafts and media stay in this browser.</p><div class="views-side-divider"></div><span>VIDEO · MP4, WEBM · UP TO 100 MB</span><span>IMAGE · JPG, PNG, WEBP, GIF · UP TO 8 MB</span><span>LOCAL PREVIEW · NOT PUBLISHED</span></aside></div>
+    const composer = this.composerOpen ? `<form class="street-composer" id="street-composer"><div class="composer-intro"><span class="street-avatar">${escapeHtml(author.slice(0, 1).toUpperCase())}</span><div><strong>Post a video</strong><span>Your video preview stays in this browser.</span></div></div><label class="street-body-label" for="street-body"><span class="visually-hidden">Video caption</span><textarea id="street-body" name="body" rows="3" maxlength="5000" placeholder="Write a caption…" aria-describedby="street-compose-note">${escapeHtml(this.draftBody)}</textarea></label><div class="street-compose-options"><label>Audience<select name="audience"><option value="public" ${this.draftAudience === 'public' ? 'selected' : ''}>Public</option><option value="followers" ${this.draftAudience === 'followers' ? 'selected' : ''}>Followers</option></select></label><label>Campus tag <input name="campus" maxlength="80" placeholder="Optional campus or community" value="${escapeHtml(this.draftCampus)}"></label></div>${previewMedia}<div class="street-compose-actions"><label class="media-picker">＋ Choose a video<input id="street-media" type="file" accept="video/mp4,video/webm" hidden></label><span id="street-character-count">${this.draftBody.length} / 5000</span><button class="street-submit" type="submit" ${this.error || this.loading || this.saving ? 'disabled' : ''}>Save video</button></div><p class="street-compose-note" id="street-compose-note">MP4 and WEBM up to 100 MB. Video stays on this device; nothing is published or synced.</p></form>` : '';
+    const filterButtons: Array<[typeof this.filter, string]> = [['all','For you'],['followers','Following']];
+    this.root.innerHTML = `<section class="views-overlay tiktok-feed" aria-labelledby="views-title">
+      <header class="views-header"><div><button class="views-back" id="views-back" type="button" aria-label="Back to chats">← <span>Back to chats</span></button><p class="eyebrow">STREET VIEWS</p><h1 id="views-title">For you</h1></div><div class="views-header-actions"><span class="views-status"><i></i> DEVICE ONLY</span><button class="views-create" id="toggle-street-composer" type="button" aria-label="Post a video">＋ Post a video</button></div></header>
+      <div class="views-content"><div class="views-feed-column">${composer}<div class="street-filters" role="group" aria-label="Video feed">${filterButtons.map(([filter,label]) => `<button type="button" data-filter="${filter}" class="${this.filter === filter ? 'is-active' : ''}">${label}</button>`).join('')}</div>
+        <div class="street-post-list has-video-posts" aria-live="polite">${this.error ? `<div class="street-empty street-error"><span>!</span><h3>Videos unavailable</h3><p>${escapeHtml(this.error)}</p><button type="button" data-retry>Try again</button></div>` : this.loading ? `<div class="street-empty"><span class="feed-loader"></span><h3>Loading your feed</h3><p>Getting your next videos ready.</p></div>` : posts.length ? posts.map((post) => this.renderPost(post)).join('') : `<div class="street-empty"><span class="feed-play-mark">▶</span><h3>Your next scroll starts here.</h3><p>Post a short video and make this space yours.</p><button type="button" id="empty-create-post">＋ &nbsp; Post your first video</button></div>`}</div></div>
+        <aside class="views-side"><div class="views-side-mark">▶</div><p class="eyebrow">STREET VIEWS</p><h2>Scroll into the moment.</h2><p>A vertical video feed. Video previews stay in this browser.</p><div class="views-side-divider"></div><span>MP4 · WEBM · UP TO 100 MB</span><span>LOCAL PREVIEW · NOT PUBLISHED</span></aside></div>
     </section>`;
     const textarea = this.root.querySelector<HTMLTextAreaElement>('#street-body');
     const count = this.root.querySelector<HTMLElement>('#street-character-count');
@@ -173,6 +169,8 @@ class StreetViewsScreen {
       const button = video.closest('.street-video-stage')?.querySelector<HTMLButtonElement>('[data-toggle-video-sound]');
       if (button) { button.setAttribute('aria-pressed', String(!video.muted)); button.setAttribute('aria-label', video.muted ? 'Turn video sound on' : 'Mute video'); button.textContent = this.soundIcon(!video.muted); }
     }));
+    videos.forEach((video) => video.addEventListener('play', () => { const button = video.closest('.street-video-stage')?.querySelector<HTMLButtonElement>('[data-toggle-video-play]'); if (button) { button.textContent = 'Ⅱ'; button.setAttribute('aria-label', 'Pause video'); } }));
+    videos.forEach((video) => video.addEventListener('pause', () => { const button = video.closest('.street-video-stage')?.querySelector<HTMLButtonElement>('[data-toggle-video-play]'); if (button) { button.textContent = '▶'; button.setAttribute('aria-label', 'Play video'); } }));
     if (videos.length && 'IntersectionObserver' in window && list) {
       this.videoObserver = new IntersectionObserver((entries) => entries.forEach((entry) => {
         const video = entry.target as HTMLVideoElement;
@@ -198,8 +196,14 @@ class StreetViewsScreen {
       if (video) { video.muted = !video.muted; soundButton.setAttribute('aria-pressed', String(!video.muted)); soundButton.setAttribute('aria-label', video.muted ? 'Turn video sound on' : 'Mute video'); soundButton.textContent = this.soundIcon(!video.muted); }
       return;
     }
+    const playButton = target?.closest<HTMLButtonElement>('[data-toggle-video-play]');
+    if (playButton) {
+      const video = playButton.closest('.street-video-stage')?.querySelector('video');
+      if (video) { if (video.paused) void video.play().catch(() => undefined); else video.pause(); }
+      return;
+    }
     const filter = target?.closest<HTMLButtonElement>('[data-filter]')?.dataset.filter;
-    if (filter === 'all' || filter === 'public' || filter === 'followers' || filter === 'videos' || filter === 'posts') {
+    if (filter === 'all' || filter === 'public' || filter === 'followers') {
       this.filter = filter;
       this.render();
       return;
@@ -235,9 +239,8 @@ class StreetViewsScreen {
     const file = target.files?.[0] ?? null;
     if (!file) return;
     const isVideo = allowedVideoTypes.has(file.type);
-    if (!isVideo && !allowedImageTypes.has(file.type)) { this.announce('Choose an MP4 or WEBM video, or a JPG, PNG, WEBP, or GIF image.'); target.value = ''; return; }
+    if (!isVideo) { this.announce('Street Views accepts MP4 and WEBM videos only.'); target.value = ''; return; }
     if (isVideo && file.size > maxVideoBytes) { this.announce('Videos must be 100 MB or smaller.'); target.value = ''; return; }
-    if (!isVideo && file.size > maxImageBytes) { this.announce('Images must be 8 MB or smaller.'); target.value = ''; return; }
     this.pendingMedia = file;
     this.render();
   };
@@ -258,7 +261,7 @@ class StreetViewsScreen {
     event.preventDefault();
     const data = new FormData(form);
     const body = String(data.get('body') ?? '').trim();
-    if (!body && !this.pendingMedia) { this.announce('Add a caption or choose a video or image first.'); return; }
+    if (!this.pendingMedia || !allowedVideoTypes.has(this.pendingMedia.type)) { this.announce('Choose an MP4 or WEBM video to post.'); return; }
     const post: LocalPost = {
       id: crypto.randomUUID(),
       body,
@@ -279,7 +282,7 @@ class StreetViewsScreen {
       this.draftBody = '';
       this.draftCampus = '';
       this.draftAudience = 'public';
-      this.filter = post.mediaType === 'video' ? 'videos' : 'posts';
+      this.filter = 'all';
       this.error = '';
       this.saving = false;
       this.loading = false;

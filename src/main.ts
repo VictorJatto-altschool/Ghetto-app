@@ -2,10 +2,11 @@ import './style.css';
 import type { ClassroomSetup, RoomStyle } from './game/campus-game';
 
 type Section = 'Chats' | 'Street Views' | 'Campus Life' | 'The Yard' | 'Communities' | 'Crews' | 'Quests' | 'Notifications' | 'Profile' | 'Settings';
-type PreviewMessage = { id: string; text: string; time: string; from: 'you' | 'sample'; replyTo?: string; reaction?: string; attachment?: { name: string; type: string; dataUrl: string } };
-type PreviewConversation = { id: string; name: string; initials: string; kind: 'direct' | 'group'; campus: string; members?: string[]; archived: boolean; muted: boolean; pinned: boolean; unread: number; messages: PreviewMessage[] };
+type PreviewMessage = { id: string; text: string; time: string; from: 'you' | 'sample'; seen?: boolean; replyTo?: string; reaction?: string; attachment?: { name: string; type: string; dataUrl: string } };
+type PreviewConversation = { id: string; name: string; initials: string; kind: 'direct' | 'group'; campus: string; online?: boolean; onlineMembers?: number; members?: string[]; archived: boolean; muted: boolean; pinned: boolean; unread: number; messages: PreviewMessage[] };
 type PreviewRequest = { id: string; name: string; initials: string; campus: string; note: string };
 type LocalProfile = { name: string; username: string; campus: string; bio: string; avatarDataUrl?: string };
+type LocalSettings = { readReceipts: boolean; profilePhotoVisibility: 'everyone' | 'nobody'; notifications: boolean; reduceMotion: boolean };
 type GifSearchResult = { id: string; title: string; url: string; preview: string };
 
 const navItems: { label: Section; icon: string }[] = [
@@ -20,13 +21,14 @@ const conversationsKey = 'ghetto-app-local-conversations-v1';
 const requestsKey = 'ghetto-app-local-message-requests-v1';
 const profileKey = 'ghetto-app-local-profile-v1';
 const classroomKey = 'ghetto-app-local-classroom-v1';
+const settingsKey = 'ghetto-app-local-settings-v1';
 let activeSection: Section = 'Chats';
 let messages: PreviewMessage[] = loadPreviewMessages();
 let conversations: PreviewConversation[] = loadConversations();
 let requests: PreviewRequest[] = loadRequests();
 let activeConversationId = conversations[0]?.id ?? 'maya';
 let chatView: 'inbox' | 'requests' | 'archived' = 'inbox';
-let chatFilter: 'all' | 'unread' | 'groups' = 'all';
+let chatFilter: 'all' | 'unread' | 'favorites' | 'groups' = 'all';
 let showChatDetails = false;
 let replyMessageId: string | null = null;
 let chatQuery = '';
@@ -43,11 +45,27 @@ let gifRequestId = 0;
 let emojiCategory = 'Faces';
 let emojiSearch = '';
 let profilePhotoDraft: string | null = null;
+let pendingProfilePhoto = '';
+let profileCropZoom = 1;
+let profileCropX = 50;
+let profileCropY = 50;
+let localSettings: LocalSettings = loadLocalSettings();
 let localProfile: LocalProfile = loadLocalProfile();
+let swipeStart: { x: number; y: number; target: EventTarget | null } | null = null;
 let activePane: 'inbox' | 'conversation' = 'inbox';
 let destroyCampusGame: (() => void) | null = null;
 let destroyStreetViews: (() => void) | null = null;
 let classroomSetup = loadClassroomSetup();
+
+function loadLocalSettings(): LocalSettings {
+  const fallback: LocalSettings = { readReceipts: true, profilePhotoVisibility: 'everyone', notifications: true, reduceMotion: false };
+  try {
+    const value = JSON.parse(localStorage.getItem(settingsKey) ?? 'null') as Partial<LocalSettings> | null;
+    return { readReceipts: value?.readReceipts !== false, profilePhotoVisibility: value?.profilePhotoVisibility === 'nobody' ? 'nobody' : 'everyone', notifications: value?.notifications !== false, reduceMotion: value?.reduceMotion === true };
+  } catch { return fallback; }
+}
+
+function saveLocalSettings(): void { try { localStorage.setItem(settingsKey, JSON.stringify(localSettings)); } catch { announce('Settings could not be saved in this browser.'); } }
 
 function loadClassroomSetup(): ClassroomSetup {
   const fallback: ClassroomSetup = { name: 'The Yard Classroom', style: 'lecture', chairs: 12 };
@@ -80,7 +98,7 @@ function loadPreviewMessages(): PreviewMessage[] {
         const safeMessages = parsed.filter((item): item is PreviewMessage => !!item && typeof item === 'object'
           && typeof item.id === 'string' && typeof item.text === 'string' && typeof item.time === 'string'
           && (item.from === 'you' || item.from === 'sample')).slice(-300).map((item) => ({
-          id: item.id.slice(0, 80), text: item.text.slice(0, 5000), time: item.time.slice(0, 40), from: item.from,
+          id: item.id.slice(0, 80), text: item.text.slice(0, 5000), time: item.time.slice(0, 40), from: item.from, seen: item.seen === true,
         }));
         if (safeMessages.length) return safeMessages;
       }
@@ -88,7 +106,7 @@ function loadPreviewMessages(): PreviewMessage[] {
   } catch { /* Ignore invalid local preview data and show the sample conversation. */ }
   return [
     { id: 'sample-1', text: 'You dey come for the campus gist later?', time: '10:42', from: 'sample' },
-    { id: 'sample-2', text: 'I go pull up after class ✨', time: '10:44', from: 'you' },
+    { id: 'sample-2', text: 'I go pull up after class ✨', time: '10:44', from: 'you', seen: true },
     { id: 'sample-3', text: 'Sharp. I saved you a seat by the courtyard.', time: '10:46', from: 'sample' },
   ];
 }
@@ -96,13 +114,13 @@ function loadPreviewMessages(): PreviewMessage[] {
 function loadConversations(): PreviewConversation[] {
   const mayaMessages = loadPreviewMessages();
   const defaults: PreviewConversation[] = [
-    { id: 'maya', name: 'Maya Okafor', initials: 'M', kind: 'direct', campus: 'University of Lagos', archived: false, muted: false, pinned: true, unread: 0, messages: mayaMessages },
-    { id: 'studio', name: 'Design studio', initials: 'DS', kind: 'group', campus: 'Creative crew', members: ['You', 'Maya Okafor', 'Tobi Adebayo'], archived: false, muted: false, pinned: false, unread: 2, messages: [
+    { id: 'maya', name: 'Maya Okafor', initials: 'M', kind: 'direct', campus: 'University of Lagos', online: true, archived: false, muted: false, pinned: true, unread: 0, messages: mayaMessages },
+    { id: 'studio', name: 'Design studio', initials: 'DS', kind: 'group', campus: 'Creative crew', onlineMembers: 2, members: ['You', 'Maya Okafor', 'Tobi Adebayo'], archived: false, muted: false, pinned: false, unread: 2, messages: [
       { id: 'studio-1', text: 'Are we still meeting by the arts block?', time: '09:18', from: 'sample' },
-      { id: 'studio-2', text: 'Yes — I’ll bring the moodboards.', time: '09:21', from: 'you' },
+      { id: 'studio-2', text: 'Yes — I’ll bring the moodboards.', time: '09:21', from: 'you', seen: false },
       { id: 'studio-3', text: 'Perfect. I have a few new references to share.', time: '09:24', from: 'sample' },
     ] },
-    { id: 'tobi', name: 'Tobi Adebayo', initials: 'T', kind: 'direct', campus: 'Lagos', archived: false, muted: false, pinned: false, unread: 1, messages: [
+    { id: 'tobi', name: 'Tobi Adebayo', initials: 'T', kind: 'direct', campus: 'Lagos', online: false, archived: false, muted: false, pinned: false, unread: 1, messages: [
       { id: 'tobi-1', text: 'I found that food spot you mentioned 👀', time: 'Yesterday', from: 'sample' },
       { id: 'tobi-2', text: 'Send me the name when you can', time: 'Yesterday', from: 'you' },
     ] },
@@ -117,14 +135,14 @@ function loadConversations(): PreviewConversation[] {
       && (item.kind === 'direct' || item.kind === 'group') && Array.isArray(item.messages))
       .slice(0, 50).map((item) => ({
         id: item.id.slice(0, 80), name: item.name.slice(0, 48), initials: typeof item.initials === 'string' ? item.initials.slice(0, 3) : '?',
-        kind: item.kind, campus: typeof item.campus === 'string' ? item.campus.slice(0, 64) : '',
+        kind: item.kind, campus: typeof item.campus === 'string' ? item.campus.slice(0, 64) : '', online: typeof item.online === 'boolean' ? item.online : item.id === 'maya', onlineMembers: Number.isFinite(item.onlineMembers) ? Math.max(0, Math.min(100, Math.floor(item.onlineMembers!))) : item.id === 'studio' ? 2 : 0,
         ...(item.kind === 'group' ? { members: Array.isArray(item.members) ? item.members.filter((member): member is string => typeof member === 'string').slice(0, 100).map((member) => member.slice(0, 48)) : ['You'] } : {}),
         archived: item.archived === true, muted: item.muted === true, pinned: item.pinned === true,
         unread: Number.isFinite(item.unread) ? Math.max(0, Math.min(999, Math.floor(item.unread))) : 0,
         messages: item.messages.filter((message): message is PreviewMessage => !!message && typeof message === 'object'
           && typeof message.id === 'string' && typeof message.text === 'string' && typeof message.time === 'string'
           && (message.from === 'you' || message.from === 'sample')).slice(-300).map((message) => ({
-          id: message.id.slice(0, 80), text: message.text.slice(0, 5000), time: message.time.slice(0, 40), from: message.from,
+          id: message.id.slice(0, 80), text: message.text.slice(0, 5000), time: message.time.slice(0, 40), from: message.from, seen: message.seen === true,
           ...(typeof message.replyTo === 'string' ? { replyTo: message.replyTo.slice(0, 80) } : {}),
           ...(typeof message.reaction === 'string' ? { reaction: message.reaction.slice(0, 8) } : {}),
           ...(message.attachment && typeof message.attachment.name === 'string' && typeof message.attachment.type === 'string' && typeof message.attachment.dataUrl === 'string'
@@ -179,9 +197,43 @@ function icon(name: string, size = 20): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] ?? paths.spark}</svg>`;
 }
 
+function navigateToSection(section: Section): void {
+  if (activeSection !== 'Chats' && section === 'Chats') activePane = 'inbox';
+  else if (section !== 'Chats') activePane = 'inbox';
+  activeSection = section;
+  emojiPickerOpen = false;
+  gifPickerOpen = false;
+  showChatDetails = false;
+  render();
+}
+
+function bindSwipeNavigation(): void {
+  const swipeSections = navItems.map(({ label }) => label);
+  const shouldIgnoreSwipe = (target: EventTarget | null): boolean => {
+    if (!(target instanceof Element)) return true;
+    const control = target.closest('button, a');
+    if (control && !control.matches('[data-open-chat]')) return true;
+    return !!target.closest('input, textarea, select, label, video, canvas, [contenteditable="true"], [role="dialog"], .message-list, .chat-details, .settings-index, .street-filters, .conversation-header, .composer');
+  };
+  document.addEventListener('pointerdown', (event) => {
+    if (event.pointerType !== 'touch' || !event.isPrimary || shouldIgnoreSwipe(event.target) || event.clientY > window.innerHeight - 86) { swipeStart = null; return; }
+    swipeStart = { x: event.clientX, y: event.clientY, target: event.target };
+  }, { passive: true });
+  document.addEventListener('pointerup', (event) => {
+    if (event.pointerType !== 'touch' || !swipeStart) return;
+    const { x, y } = swipeStart; swipeStart = null;
+    const dx = event.clientX - x; const dy = event.clientY - y;
+    if (Math.abs(dx) < 58 || Math.abs(dy) > 76 || Math.abs(dx) < Math.abs(dy) * 1.25) return;
+    const index = swipeSections.indexOf(activeSection);
+    if (index < 0) return;
+    const next = swipeSections[index + (dx < 0 ? 1 : -1)];
+    if (next) navigateToSection(next);
+  }, { passive: true });
+  document.addEventListener('pointercancel', () => { swipeStart = null; }, { passive: true });
+}
+
 function currentTheme(): string {
-  const saved = localStorage.getItem('ghetto-app-theme');
-  return saved ?? 'light';
+  try { return localStorage.getItem('ghetto-app-theme') ?? 'light'; } catch { return 'light'; }
 }
 
 function render(): void {
@@ -190,25 +242,29 @@ function render(): void {
   destroyStreetViews?.();
   destroyStreetViews = null;
   document.documentElement.dataset.theme = currentTheme();
+  document.documentElement.dataset.reduceMotion = localSettings.reduceMotion ? 'true' : 'false';
   const app = document.querySelector<HTMLDivElement>('#app')!;
   const preview = activeSection === 'Chats';
   const profile = activeSection === 'Profile';
+  const settings = activeSection === 'Settings';
   const campus = activeSection === 'Campus Life';
   const streetViews = activeSection === 'Street Views';
+  const unreadChatCount = conversations.filter((item) => !item.archived).reduce((total, item) => total + item.unread, 0);
   app.innerHTML = `
     <div class="app-shell">
       <aside class="rail" aria-label="Main navigation">
-        <a class="brand-mark" href="#" aria-label="GHETTO APP home"><span class="brand-glyph">g</span><span class="brand-word">GHETTO<span>APP</span></span></a>
+        <a class="brand-mark" href="#main" aria-label="GHETTO APP home" title="Go to Chats"><span class="brand-glyph">g</span><span class="brand-word">GHETTO<span>APP</span></span></a>
         <div class="rail-rule"></div>
-        <nav class="rail-nav">${navItems.map((item) => `<button class="nav-item ${activeSection === item.label ? 'is-active' : ''}" data-section="${item.label}" aria-current="${activeSection === item.label ? 'page' : 'false'}"><span class="nav-icon">${item.icon === 'street-s' ? '<span class="street-s-mark" aria-hidden="true">S</span>' : icon(item.icon)}</span><span>${item.label}</span></button>`).join('')}</nav>
-        <div class="rail-bottom"><button class="nav-item ${activeSection === 'Profile' ? 'is-active' : ''}" data-section="Profile">${avatarMarkup(localProfile.name?.[0] || 'Y','avatar avatar-you')}<span>My profile</span></button><button class="nav-item" id="theme-toggle" aria-label="Switch colour theme">${icon('moon')}<span>Appearance</span></button><div class="rail-caption">NIGHT CULTURE · PREVIEW</div></div>
+        <nav class="rail-nav">${navItems.map((item) => `<button class="nav-item ${activeSection === item.label ? 'is-active' : ''}" data-section="${item.label}" aria-current="${activeSection === item.label ? 'page' : 'false'}" ${item.label === 'Chats' && unreadChatCount ? `aria-label="Chats, ${unreadChatCount} unread messages"` : ''}><span class="nav-icon">${item.icon === 'street-s' ? '<span class="street-s-mark" aria-hidden="true">S</span>' : icon(item.icon)}${item.label === 'Chats' && unreadChatCount ? `<span class="nav-count">${unreadChatCount}</span>` : ''}</span><span>${item.label}</span></button>`).join('')}</nav>
+        <div class="rail-bottom"><button class="nav-item ${activeSection === 'Profile' ? 'is-active' : ''}" data-section="Profile" title="My profile">${avatarMarkup(localProfile.name?.[0] || 'Y','avatar avatar-you')}<span>My profile</span></button><button class="nav-item ${settings ? 'is-active' : ''}" data-section="Settings" title="Settings">${icon('settings')}<span>Settings</span></button><button class="nav-item" id="theme-toggle" aria-label="Switch colour theme">${icon('moon')}<span>Appearance</span></button><div class="rail-caption">NIGHT CULTURE · PREVIEW</div></div>
       </aside>
       <main id="main" class="workspace ${activePane === 'conversation' ? 'show-conversation' : ''}">
         ${renderChatWorkspace()}
       </main>
-      <nav class="mobile-nav" aria-label="Mobile navigation">${[['Chats','message'],['Street Views','street-s'],['Campus Life','campus'],['The Yard','compass'],['Profile','people']].map(([label, ico]) => `<button class="mobile-nav-item ${activeSection === label ? 'is-active' : ''}" data-section="${label}">${ico === 'street-s' ? '<span class="street-s-mark mobile-street-s" aria-hidden="true">S</span>' : icon(ico, 21)}<span>${label === 'Street Views' ? 'Views' : label === 'Campus Life' ? 'Campus' : label}</span></button>`).join('')}</nav>
+      <nav class="mobile-nav" aria-label="Mobile navigation">${[['Chats','message'],['Street Views','street-s'],['Campus Life','campus'],['The Yard','compass'],['Profile','people'],['Settings','settings']].map(([label, ico]) => `<button class="mobile-nav-item ${activeSection === label ? 'is-active' : ''}" data-section="${label}" aria-current="${activeSection === label ? 'page' : 'false'}" ${label === 'Chats' && unreadChatCount ? `aria-label="Chats, ${unreadChatCount} unread messages"` : ''}><span class="mobile-nav-icon">${ico === 'street-s' ? '<span class="street-s-mark mobile-street-s" aria-hidden="true">S</span>' : icon(ico, 21)}${label === 'Chats' && unreadChatCount ? `<span class="nav-count">${unreadChatCount}</span>` : ''}</span><span>${label === 'Street Views' ? 'Views' : label === 'Campus Life' ? 'Campus' : label}</span></button>`).join('')}</nav>
     </div>
-    ${profile ? renderProfilePage() : campus ? renderCampusScreen() : streetViews ? '<div id="street-views-root"></div>' : preview ? '' : `<div class="feature-overlay" role="status"><div class="feature-card"><span class="feature-icon">${icon(navItems.find((x) => x.label === activeSection)?.icon ?? 'settings', 24)}</span><p class="eyebrow">GHETTO APP · ROADMAP</p><h2>${escapeHtml(activeSection)}</h2><p>This space is planned for the next build phases. It will appear here once the real feature is ready.</p><button class="primary-button" id="return-chats">Back to chats</button></div></div>`}
+    ${profile ? renderProfilePage() : settings ? renderSettingsPage() : campus ? renderCampusScreen() : streetViews ? '<div id="street-views-root"></div>' : preview ? '' : `<div class="feature-overlay" role="status"><div class="feature-card"><span class="feature-icon">${icon(navItems.find((x) => x.label === activeSection)?.icon ?? 'settings', 24)}</span><p class="eyebrow">GHETTO APP · ROADMAP</p><h2>${escapeHtml(activeSection)}</h2><p>This space is planned for the next build phases. It will appear here once the real feature is ready.</p><button class="primary-button" id="return-chats">Back to chats</button></div></div>`}
+    ${profile ? renderPhotoEditor() : ''}
   `;
   bindEvents();
   scrollMessagesToEnd();
@@ -266,10 +322,13 @@ function renderChatWorkspace(): string {
   const conversation = currentConversation();
   const query = chatQuery.trim().toLowerCase();
   const visible = conversations.filter((item) => chatView === 'archived' ? item.archived : !item.archived)
-    .filter((item) => chatFilter === 'unread' ? item.unread > 0 : chatFilter === 'groups' ? item.kind === 'group' : true)
+    .filter((item) => chatFilter === 'unread' ? item.unread > 0 : chatFilter === 'favorites' ? item.pinned : chatFilter === 'groups' ? item.kind === 'group' : true)
     .filter((item) => !query || `${item.name} ${item.campus} ${item.messages.map((message) => message.text).join(' ')}`.toLowerCase().includes(query))
     .sort((a, b) => Number(b.pinned) - Number(a.pinned));
   const listTitle = chatView === 'requests' ? 'Message requests' : chatView === 'archived' ? 'Archived chats' : 'Your conversations';
+  const unreadCount = conversations.filter((item) => !item.archived).reduce((total, item) => total + item.unread, 0);
+  const favoritesCount = conversations.filter((item) => !item.archived && item.pinned).length;
+  const groupsCount = conversations.filter((item) => !item.archived && item.kind === 'group').length;
   const inboxContent = chatView === 'requests' ? renderRequestList() : visible.length
     ? visible.map((item) => renderConversationRow(item)).join('')
     : `<div class="chat-list-empty"><span>✳</span><strong>${query ? 'No matching chats' : chatView === 'archived' ? 'Nothing archived yet' : 'No chats in this filter'}</strong><small>${query ? 'Try a name or a word from a message.' : 'Start a new chat preview to see it here.'}</small></div>`;
@@ -277,13 +336,12 @@ function renderChatWorkspace(): string {
       <div class="inbox-heading"><div><p class="eyebrow">YOUR PEOPLE</p><h1>Chats</h1></div><div class="heading-actions"><button class="icon-button theme-mobile" id="theme-toggle-mobile" aria-label="Switch colour theme">${icon('moon')}</button><button class="icon-button" id="new-chat" aria-label="Start a new chat" title="New chat">${icon('plus')}</button></div></div>
       <label class="search-box">${icon('search')}<input id="chat-search" type="search" placeholder="Search chats or messages" aria-label="Search chats or messages" value="${escapeHtml(chatQuery)}"></label>
       ${requests.length ? `<button class="requests-row ${chatView === 'requests' ? 'is-selected' : ''}" id="show-requests" type="button"><span class="request-icon">${icon('message', 18)}</span><span><strong>Message requests</strong><small>${requests.length} waiting · people outside your chats</small></span><b class="unread-pill">${requests.length}</b><span class="chevron">›</span></button>` : chatView === 'requests' ? '<button class="requests-row" id="back-to-chat-inbox" type="button">‹ &nbsp; Back to chats</button>' : ''}
-      <div class="chat-filter-row" role="group" aria-label="Filter chats"><button type="button" data-chat-filter="all" class="${chatFilter === 'all' ? 'is-active' : ''}">All</button><button type="button" data-chat-filter="unread" class="${chatFilter === 'unread' ? 'is-active' : ''}">Unread</button><button type="button" data-chat-filter="groups" class="${chatFilter === 'groups' ? 'is-active' : ''}">Groups</button><button type="button" id="show-archived" class="archive-shortcut ${chatView === 'archived' ? 'is-active' : ''}">Archived</button></div>
+      <div class="chat-filter-row" role="group" aria-label="Filter chats"><button type="button" data-chat-filter="all" class="${chatFilter === 'all' ? 'is-active' : ''}">All</button><button type="button" data-chat-filter="unread" class="${chatFilter === 'unread' ? 'is-active' : ''}">Unread${unreadCount ? ` <b class="filter-count">${unreadCount}</b>` : ''}</button><button type="button" data-chat-filter="favorites" class="${chatFilter === 'favorites' ? 'is-active' : ''}">Favourites${favoritesCount ? ` <b class="filter-count">${favoritesCount}</b>` : ''}</button><button type="button" data-chat-filter="groups" class="${chatFilter === 'groups' ? 'is-active' : ''}">Groups${groupsCount ? ` <b class="filter-count">${groupsCount}</b>` : ''}</button><button type="button" id="show-archived" class="archive-shortcut ${chatView === 'archived' ? 'is-active' : ''}">Archived</button></div>
       <div class="list-label">${escapeHtml(listTitle).toUpperCase()}</div>
       <div class="chat-list" id="chat-list">${inboxContent}</div>
-      <div class="inbox-footer">Private chats stay personal.<br><span>Preview messages are saved only in this browser.</span></div>
     </section>
     <section class="conversation-panel ${activePane === 'conversation' ? 'conversation-visible-mobile' : ''}" aria-label="Conversation">
-      <header class="conversation-header"><button class="back-button" id="back-to-inbox" aria-label="Back to chats">${icon('back')}</button><span class="avatar avatar-maya avatar-small">${escapeHtml(conversation.initials)}</span><div class="person-title"><strong>${escapeHtml(conversation.name)} <i class="preview-tag">${conversation.kind === 'group' ? 'GROUP' : 'PREVIEW'}</i></strong><span>${escapeHtml(conversation.kind === 'group' ? conversation.campus || 'Local group preview' : conversation.campus || 'Local chat preview')}</span></div><button class="icon-button header-more" id="conversation-menu" aria-label="Conversation details">${icon('more')}</button></header>
+      <header class="conversation-header"><button class="back-button" id="back-to-inbox" aria-label="Back to chats">${icon('back')}</button><span class="avatar avatar-maya avatar-small ${conversation.online ? 'presence-online' : ''}">${escapeHtml(conversation.initials)}</span><div class="person-title"><strong>${escapeHtml(conversation.name)} <i class="preview-tag">${conversation.kind === 'group' ? 'GROUP' : 'PREVIEW'}</i></strong><span class="presence-label ${conversation.online || conversation.onlineMembers ? 'is-online' : ''}">${conversation.kind === 'group' ? `${conversation.onlineMembers ?? 0} members online · local preview` : conversation.online ? 'Online now · local preview' : 'Offline · local preview'}</span></div><button class="icon-button header-more" id="conversation-menu" aria-label="Conversation details">${icon('more')}</button></header>
       <div class="local-banner"><span class="local-dot"></span><span><strong>Device-only preview</strong> · not delivered, synced, or end-to-end encrypted.</span></div>
       <div class="message-date">${conversation.kind === 'group' ? 'GROUP PREVIEW' : 'PRIVATE CHAT PREVIEW'} · ONLY YOU CAN SEE THIS</div>
       <div class="message-list" id="message-list">${conversation.messages.map((message) => renderConversationMessage(message, conversation)).join('')}</div>
@@ -292,14 +350,15 @@ function renderChatWorkspace(): string {
       <div class="composer-hint">Local preview only · your text is not sent to anyone.</div>
       ${showChatDetails ? renderChatDetails(conversation) : ''}
     </section>
-    <aside class="context-panel"><div class="context-top"><span class="context-label">NIGHT CULTURE</span><span class="context-orbit">✳</span></div><div class="context-card"><div class="context-art"><div class="art-orb orb-one"></div><div class="art-orb orb-two"></div><span class="art-glyph">g</span><span class="art-spark">✦</span></div><div class="context-copy"><p class="eyebrow">A NEW KIND OF SOCIAL</p><h2>Your people.<br>Your world.</h2><p>Chat privately. Share publicly. Meet in Campus Life.</p><span class="coming-label"><span></span>Building the foundation</span></div></div><div class="context-bottom"><span>GHETTO APP</span><span>BUILT FOR YOUR WORLD ↗</span></div></aside>
     ${renderNewChatDialog()}`;
 }
 
 function renderConversationRow(item: PreviewConversation): string {
-  const lastMessage = item.messages.at(-1)?.text ?? 'Start the conversation';
+  const latest = item.messages.at(-1);
+  const lastMessage = latest?.text || (latest?.attachment ? latest.attachment.type === 'image/gif' ? 'GIF' : latest.attachment.type.startsWith('image/') ? 'Photo' : 'Document' : 'Start the conversation');
   const selected = item.id === activeConversationId && activePane === 'conversation';
-  return `<article class="chat-row ${selected ? 'is-selected' : ''} ${item.unread ? 'has-unread' : ''}" data-chat-row="${escapeHtml(item.id)}"><button type="button" class="chat-open" data-open-chat="${escapeHtml(item.id)}"><span class="avatar avatar-maya">${escapeHtml(item.initials)}</span><span class="chat-summary"><span class="chat-name">${escapeHtml(item.name)} ${item.kind === 'group' ? '<i class="preview-tag">GROUP</i>' : ''} ${item.muted ? '<i class="preview-tag">MUTED</i>' : ''}</span><span class="chat-snippet">${escapeHtml(lastMessage)}</span></span><span class="chat-row-meta"><span class="chat-time">${escapeHtml(item.messages.at(-1)?.time ?? '')}</span>${item.unread ? `<b class="unread-pill">${item.unread}</b>` : ''}</span></button><button type="button" class="chat-row-menu" data-archive-chat="${escapeHtml(item.id)}" aria-label="${item.archived ? 'Restore' : 'Archive'} ${escapeHtml(item.name)}" title="${item.archived ? 'Restore chat' : 'Archive chat'}">${item.archived ? '↩' : '↓'}</button></article>`;
+  const lastMessageStatus = latest?.from === 'you' ? `<span class="chat-message-check ${latest.seen ? 'is-seen' : 'is-unseen'}" title="${latest.seen ? 'Seen' : 'Unseen'} in this preview" aria-label="${latest.seen ? 'Seen' : 'Unseen'}">✓✓</span>` : '';
+  return `<article class="chat-row ${selected ? 'is-selected' : ''} ${item.unread ? 'has-unread' : ''}" data-chat-row="${escapeHtml(item.id)}"><button type="button" class="chat-open" data-open-chat="${escapeHtml(item.id)}"><span class="avatar avatar-maya ${item.online ? 'presence-online' : ''}">${escapeHtml(item.initials)}</span><span class="chat-summary"><span class="chat-name">${escapeHtml(item.name)} ${item.kind === 'group' ? '<i class="preview-tag">GROUP</i>' : ''} ${item.muted ? '<i class="preview-tag">MUTED</i>' : ''}</span><span class="chat-snippet">${lastMessageStatus}${escapeHtml(lastMessage)}</span></span><span class="chat-row-meta"><span class="chat-time">${escapeHtml(latest?.time ?? '')}</span>${item.unread ? `<b class="unread-pill" aria-label="${item.unread} unread messages">${item.unread}</b>` : ''}</span></button><button type="button" class="chat-row-menu" data-archive-chat="${escapeHtml(item.id)}" aria-label="${item.archived ? 'Restore' : 'Archive'} ${escapeHtml(item.name)}" title="${item.archived ? 'Restore chat' : 'Archive chat'}">${item.archived ? '↩' : '↓'}</button></article>`;
 }
 
 function renderRequestList(): string {
@@ -311,10 +370,17 @@ function renderRequestList(): string {
 function renderConversationMessage(message: PreviewMessage, conversation: PreviewConversation): string {
   const replied = message.replyTo ? conversation.messages.find((item) => item.id === message.replyTo) : null;
   const attachmentUrl = message.attachment ? safeAttachmentUrl(message.attachment.dataUrl, message.attachment.type) : '';
+  const emojiOnly = !message.attachment && !replied && isEmojiOnlyText(message.text);
   const attachment = message.attachment && attachmentUrl ? (message.attachment.type.startsWith('image/')
     ? `<a class="chat-attachment" href="${escapeHtml(attachmentUrl)}" target="_blank" rel="noreferrer"><img src="${escapeHtml(attachmentUrl)}" alt="${escapeHtml(message.attachment.name)}"><span>${escapeHtml(message.attachment.name)} · local image</span></a>`
     : `<a class="chat-attachment-file" href="${escapeHtml(attachmentUrl)}" download="${escapeHtml(message.attachment.name)}">↧ ${escapeHtml(message.attachment.name)}</a>`) : '';
-  return `<article class="message-row ${message.from === 'you' ? 'message-outgoing' : 'message-incoming'}" data-message-row="${escapeHtml(message.id)}"><div class="message-bubble">${replied ? `<div class="quoted-message">${escapeHtml(replied.from === 'you' ? 'You' : conversation.name)}: ${escapeHtml(replied.text)}</div>` : ''}${attachment}${escapeHtml(message.text).replace(/\n/g, '<br>')}<div class="message-meta"><time>${escapeHtml(message.time)}</time>${message.from === 'you' ? '<span aria-label="saved on this device">✓</span>' : ''}</div>${message.reaction ? `<span class="message-reaction">${escapeHtml(message.reaction)}</span>` : ''}</div><div class="message-actions"><button type="button" data-reply-message="${escapeHtml(message.id)}" aria-label="Reply to message">↩</button><button type="button" data-react-message="${escapeHtml(message.id)}" aria-label="React to message">☺</button></div></article>`;
+  const receipt = message.from === 'you' ? `<span class="message-receipt ${message.seen ? 'is-seen' : 'is-unseen'}" aria-label="${message.seen ? 'Seen' : 'Unseen'} in local preview" title="${message.seen ? 'Seen' : 'Unseen'} · local preview">✓✓</span>` : '';
+  return `<article class="message-row ${message.from === 'you' ? 'message-outgoing' : 'message-incoming'} ${emojiOnly ? 'is-emoji-only' : ''}" data-message-row="${escapeHtml(message.id)}"><div class="message-bubble ${emojiOnly ? 'is-emoji-bubble' : ''}">${replied ? `<div class="quoted-message">${escapeHtml(replied.from === 'you' ? 'You' : conversation.name)}: ${escapeHtml(replied.text)}</div>` : ''}${attachment}<span class="message-copy">${escapeHtml(message.text).replace(/\n/g, '<br>')}</span><div class="message-meta"><time>${escapeHtml(message.time)}</time>${receipt}</div>${message.reaction ? `<span class="message-reaction">${escapeHtml(message.reaction)}</span>` : ''}</div><div class="message-actions"><button type="button" data-reply-message="${escapeHtml(message.id)}" aria-label="Reply to message">↩</button><button type="button" data-react-message="${escapeHtml(message.id)}" aria-label="React to message">☺</button></div></article>`;
+}
+
+function isEmojiOnlyText(text: string): boolean {
+  const value = text.trim();
+  return !!value && /^[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}\u200d\ufe0f\u20e3\s]+$/u.test(value);
 }
 
 function safeAttachmentUrl(value: string, type: string): string {
@@ -411,7 +477,7 @@ function renderProfilePage(): string {
     <header class="profile-header"><button class="profile-back" id="profile-back">${icon('back', 18)}<span>Back to chats</span></button><div class="profile-header-mark"><span class="brand-glyph">g</span><span>GHETTO APP</span></div><button class="icon-button" id="profile-theme-toggle" aria-label="Switch colour theme">${icon('moon')}</button></header>
     <div class="profile-content"><div class="profile-intro"><p class="eyebrow">MAKE IT YOURS · LOCAL PREVIEW</p><h1 id="profile-title">Your corner<br>of the world.</h1><p>Your profile details stay in this browser. There’s no account and nothing is published.</p></div>
       <div class="profile-grid"><form class="profile-form" id="profile-form"><div class="form-heading"><div><span class="step-tag">ON THIS DEVICE</span><h2>Profile details</h2></div><span class="form-mark">✳</span></div>
-        <div class="photo-setting">${avatarMarkup(localProfile.name?.[0] || '✳','profile-avatar photo-setting-avatar')}<div><strong>Profile photo</strong><small>PNG, JPG or WEBP · up to 900 KB</small><label class="photo-upload-button" for="profile-photo-input">Choose photo</label><input id="profile-photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden><button type="button" class="photo-remove-button" id="remove-profile-photo" ${localProfile.avatarDataUrl ? '' : 'hidden'}>Remove</button></div></div>
+        <div class="photo-setting">${avatarMarkup(localProfile.name?.[0] || '✳','profile-avatar photo-setting-avatar')}<div><strong>Profile photo</strong><small>Choose, frame and preview before saving</small><div class="photo-actions"><label class="photo-upload-button" for="profile-photo-input">Choose photo</label><label class="photo-upload-button photo-camera-button" for="profile-camera-input">Take photo</label><input id="profile-photo-input" type="file" accept="image/*" hidden><input id="profile-camera-input" type="file" accept="image/*" capture="user" hidden><button type="button" class="photo-remove-button" id="remove-profile-photo" ${localProfile.avatarDataUrl || profilePhotoDraft ? '' : 'hidden'}>Remove</button></div></div></div>
         <label class="field-label">Display name<input name="name" maxlength="48" required autocomplete="name" placeholder="What should people call you?" value="${escapeHtml(localProfile.name)}"></label>
         <label class="field-label">Username<div class="handle-input"><span>@</span><input name="username" maxlength="24" pattern="[A-Za-z0-9_]{3,24}" autocomplete="off" placeholder="3–24 letters, numbers or _" value="${escapeHtml(localProfile.username)}"></div></label>
         <label class="field-label">Campus or community <span class="optional">OPTIONAL</span><input name="campus" maxlength="64" placeholder="Add your campus or community" value="${escapeHtml(localProfile.campus)}"></label>
@@ -424,6 +490,16 @@ function renderProfilePage(): string {
   </section>`;
 }
 
+function renderPhotoEditor(): string {
+  if (!pendingProfilePhoto) return '';
+  return `<div class="photo-editor-backdrop" id="photo-editor-backdrop"><section class="photo-editor" role="dialog" aria-modal="true" aria-labelledby="photo-editor-title"><header><div><span class="step-tag">PROFILE PHOTO</span><h2 id="photo-editor-title">Make it yours</h2></div><button type="button" class="icon-button" id="cancel-photo-edit" aria-label="Close photo editor">×</button></header><p class="photo-editor-copy">Move the photo and adjust the frame. Your original stays untouched.</p><div class="photo-crop-frame"><img id="photo-crop-image" src="${escapeHtml(pendingProfilePhoto)}" alt="Adjustable profile photo crop"></div><div class="crop-controls"><label>Zoom <input id="photo-zoom" type="range" min="1" max="2.5" step="0.01" value="${profileCropZoom}"></label><label>Horizontal <input id="photo-pan-x" type="range" min="0" max="100" value="${profileCropX}"></label><label>Vertical <input id="photo-pan-y" type="range" min="0" max="100" value="${profileCropY}"></label></div><footer><button type="button" class="photo-cancel" id="cancel-photo-edit-footer">Cancel</button><button type="button" class="save-profile" id="confirm-photo-edit">Use photo <span>↗</span></button></footer></section></div>`;
+}
+
+function renderSettingsPage(): string {
+  const dark = currentTheme() === 'dark';
+  return `<section class="profile-overlay settings-overlay" aria-labelledby="settings-title"><header class="profile-header"><button class="profile-back" id="settings-back">${icon('back',18)}<span>Back to chats</span></button><div class="profile-header-mark"><span class="brand-glyph">g</span><span>GHETTO APP</span></div><span class="settings-local-tag">THIS DEVICE</span></header><div class="settings-content"><div class="profile-intro"><p class="eyebrow">YOUR SPACE · YOUR RULES</p><h1 id="settings-title">Settings.</h1><p>Make GHETTO APP feel right for you. These choices stay in this browser.</p></div><div class="settings-layout"><nav class="settings-index" aria-label="Settings sections"><a href="#settings-account">Account</a><a href="#settings-privacy">Privacy</a><a href="#settings-notifications">Notifications</a><a href="#settings-appearance">Appearance</a><a href="#settings-storage">Storage</a></nav><div class="settings-sections"><section class="settings-card" id="settings-account"><div class="settings-card-title"><span class="settings-icon">${icon('people')}</span><div><h2>Account</h2><p>Your profile, on this device</p></div></div><button class="settings-link-row" id="open-profile-settings"><span>${avatarMarkup(localProfile.name?.[0] || 'Y','avatar avatar-you')}<span><strong>${escapeHtml(localProfile.name || 'Set up your profile')}</strong><small>${localProfile.username ? `@${escapeHtml(localProfile.username)}` : 'Add a name, photo and bio'}</small></span></span><b>›</b></button><p class="settings-footnote">No account is connected yet. Profile changes are saved only in this browser.</p></section><section class="settings-card" id="settings-privacy"><div class="settings-card-title"><span class="settings-icon">◉</span><div><h2>Privacy</h2><p>Save your preferences for connected chats</p></div></div><label class="settings-choice"><span><strong>Read receipts</strong><small>Remember your read receipt preference for when real chats are connected</small></span><input type="checkbox" data-setting="readReceipts" ${localSettings.readReceipts ? 'checked' : ''}><i></i></label><label class="settings-choice"><span><strong>Profile photo visibility</strong><small>Remember who can see your photo once accounts are connected</small></span><select data-setting="profilePhotoVisibility"><option value="everyone" ${localSettings.profilePhotoVisibility === 'everyone' ? 'selected' : ''}>Everyone</option><option value="nobody" ${localSettings.profilePhotoVisibility === 'nobody' ? 'selected' : ''}>Nobody</option></select></label><p class="settings-footnote">Your photo remains private in this preview; visibility choices do not publish it.</p></section><section class="settings-card" id="settings-notifications"><div class="settings-card-title"><span class="settings-icon">${icon('bell')}</span><div><h2>Notifications</h2><p>Notification preferences</p></div></div><label class="settings-choice"><span><strong>Push notifications</strong><small>Remember this preference for when accounts are connected</small></span><input type="checkbox" data-setting="notifications" ${localSettings.notifications ? 'checked' : ''}><i></i></label><p class="settings-footnote">Push alerts are not sent in this local preview. On-screen confirmations remain available.</p></section><section class="settings-card" id="settings-appearance"><div class="settings-card-title"><span class="settings-icon">${icon('moon')}</span><div><h2>Appearance</h2><p>Set the mood</p></div></div><div class="theme-choices"><button class="theme-choice ${!dark ? 'is-selected' : ''}" data-theme-choice="light"><span class="theme-swatch theme-swatch-light"></span><strong>Daylight</strong><small>Light theme</small></button><button class="theme-choice ${dark ? 'is-selected' : ''}" data-theme-choice="dark"><span class="theme-swatch theme-swatch-dark"></span><strong>After hours</strong><small>Dark theme</small></button></div><label class="settings-choice"><span><strong>Reduce motion</strong><small>Keep transitions subtle across the app</small></span><input type="checkbox" data-setting="reduceMotion" ${localSettings.reduceMotion ? 'checked' : ''}><i></i></label></section><section class="settings-card" id="settings-storage"><div class="settings-card-title"><span class="settings-icon">▤</span><div><h2>Storage and data</h2><p>Your preview lives in this browser</p></div></div><div class="settings-storage-info"><span>Saved profile and preferences</span><strong>On this device</strong></div><div class="settings-storage-info"><span>Photos and chat previews</span><strong>Browser storage</strong></div><p class="settings-footnote">Clearing browser data or using a different browser removes these local previews.</p></section><p class="settings-version">GHETTO APP · PRIVATE PREVIEW · NO ACCOUNT CONNECTED</p></div></div></div></section>`;
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 }
@@ -434,21 +510,30 @@ function scrollMessagesToEnd(): void {
 }
 
 function bindEvents(): void {
-  document.querySelectorAll<HTMLElement>('[data-section]').forEach((button) => button.addEventListener('click', () => {
-    const section = button.dataset.section as Section;
-    activeSection = section;
-    activePane = section === 'Chats' ? activePane : 'inbox';
-    render();
-  }));
+  document.querySelectorAll<HTMLElement>('[data-section]').forEach((button) => button.addEventListener('click', () => navigateToSection(button.dataset.section as Section)));
+  document.querySelector('.brand-mark')?.addEventListener('click', (event) => { event.preventDefault(); navigateToSection('Chats'); });
   const toggleTheme = (): void => {
     const next = currentTheme() === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('ghetto-app-theme', next);
+    try { localStorage.setItem('ghetto-app-theme', next); } catch { announce('Theme changes cannot be saved in this browser.'); }
     render();
   };
   document.querySelector('#theme-toggle')?.addEventListener('click', toggleTheme);
   document.querySelector('#theme-toggle-mobile')?.addEventListener('click', toggleTheme);
   document.querySelector('#profile-theme-toggle')?.addEventListener('click', toggleTheme);
   document.querySelector('#return-chats')?.addEventListener('click', () => { activeSection = 'Chats'; render(); });
+  document.querySelector('#settings-back')?.addEventListener('click', () => { activeSection = 'Chats'; render(); });
+  document.querySelector('#open-profile-settings')?.addEventListener('click', () => { activeSection = 'Profile'; render(); });
+  document.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]').forEach((control) => control.addEventListener('change', () => {
+    const key = (control as HTMLElement).dataset.setting as keyof LocalSettings;
+    if (key === 'profilePhotoVisibility') localSettings.profilePhotoVisibility = (control as HTMLSelectElement).value === 'nobody' ? 'nobody' : 'everyone';
+    else if (key === 'readReceipts' || key === 'notifications' || key === 'reduceMotion') localSettings[key] = (control as HTMLInputElement).checked;
+    saveLocalSettings();
+    announce('Setting saved on this device.');
+  }));
+  document.querySelectorAll<HTMLButtonElement>('[data-theme-choice]').forEach((button) => button.addEventListener('click', () => {
+    try { localStorage.setItem('ghetto-app-theme', button.dataset.themeChoice === 'dark' ? 'dark' : 'light'); } catch { announce('Theme changes cannot be saved in this browser.'); }
+    render();
+  }));
   document.querySelector('#profile-back')?.addEventListener('click', () => { activeSection = 'Chats'; render(); });
   document.querySelector('#campus-back')?.addEventListener('click', () => { activeSection = 'Chats'; render(); });
   document.querySelector<HTMLFormElement>('#profile-form')?.addEventListener('submit', (event) => {
@@ -462,15 +547,55 @@ function bindEvents(): void {
       bio: String(data.get('bio') ?? '').trim(),
       avatarDataUrl: profilePhotoDraft === null ? localProfile.avatarDataUrl : profilePhotoDraft || undefined,
     };
+    try { localStorage.setItem(profileKey, JSON.stringify(localProfile)); } catch { announce('Profile could not be saved. Choose a smaller photo or clear some browser storage.'); return; }
     profilePhotoDraft = null;
-    try { localStorage.setItem(profileKey, JSON.stringify(localProfile)); } catch { announce('Profile photo is too large for this browser. Choose a smaller image.'); return; }
     render();
     announce('Profile saved in this browser. It is not public.');
   });
-  document.querySelector<HTMLInputElement>('#profile-photo-input')?.addEventListener('change', (event) => {
-    const input = event.currentTarget as HTMLInputElement; const file = input.files?.[0]; if (!file) return;
-    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 900 * 1024) { announce('Choose a PNG, JPG or WEBP photo under 900 KB.'); input.value = ''; return; }
-    const reader = new FileReader(); reader.onload = () => { profilePhotoDraft = String(reader.result); document.querySelectorAll<HTMLElement>('.profile-avatar').forEach((node) => { node.innerHTML = `<img src="${profilePhotoDraft}" alt="Profile photo">`; }); document.querySelector('#remove-profile-photo')?.removeAttribute('hidden'); }; reader.onerror = () => announce('That photo could not be read.'); reader.readAsDataURL(file);
+  document.querySelectorAll<HTMLInputElement>('#profile-photo-input, #profile-camera-input').forEach((input) => input.addEventListener('change', (event) => {
+    const picker = event.currentTarget as HTMLInputElement; const file = picker.files?.[0]; picker.value = ''; if (!file) return;
+    if (!file.type.startsWith('image/')) { announce('Choose an image file for your profile photo.'); return; }
+    if (file.size > 20 * 1024 * 1024) { announce('That photo is over 20 MB. Choose a smaller image.'); return; }
+    const reader = new FileReader(); reader.onload = () => { pendingProfilePhoto = String(reader.result); profileCropZoom = 1; profileCropX = 50; profileCropY = 50; render(); document.querySelector<HTMLButtonElement>('#cancel-photo-edit')?.focus(); }; reader.onerror = () => announce('That photo could not be opened. Try another one.'); reader.readAsDataURL(file);
+  }));
+  const syncPhotoCrop = (): void => {
+    const image = document.querySelector<HTMLImageElement>('#photo-crop-image');
+    if (image) { image.style.objectPosition = `${profileCropX}% ${profileCropY}%`; image.style.transform = `scale(${profileCropZoom})`; }
+  };
+  document.querySelector<HTMLInputElement>('#photo-zoom')?.addEventListener('input', (event) => { profileCropZoom = Number((event.currentTarget as HTMLInputElement).value); syncPhotoCrop(); });
+  document.querySelector<HTMLInputElement>('#photo-pan-x')?.addEventListener('input', (event) => { profileCropX = Number((event.currentTarget as HTMLInputElement).value); syncPhotoCrop(); });
+  document.querySelector<HTMLInputElement>('#photo-pan-y')?.addEventListener('input', (event) => { profileCropY = Number((event.currentTarget as HTMLInputElement).value); syncPhotoCrop(); });
+  const cropFrame = document.querySelector<HTMLElement>('.photo-crop-frame');
+  if (cropFrame) {
+    let dragX = 0; let dragY = 0;
+    cropFrame.addEventListener('pointerdown', (event) => { dragX = event.clientX; dragY = event.clientY; cropFrame.setPointerCapture(event.pointerId); });
+    cropFrame.addEventListener('pointermove', (event) => {
+      if (!cropFrame.hasPointerCapture(event.pointerId)) return;
+      profileCropX = Math.max(0, Math.min(100, profileCropX - (event.clientX - dragX) / cropFrame.clientWidth * 100));
+      profileCropY = Math.max(0, Math.min(100, profileCropY - (event.clientY - dragY) / cropFrame.clientHeight * 100));
+      dragX = event.clientX; dragY = event.clientY;
+      const xRange = document.querySelector<HTMLInputElement>('#photo-pan-x'); const yRange = document.querySelector<HTMLInputElement>('#photo-pan-y');
+      if (xRange) xRange.value = String(profileCropX); if (yRange) yRange.value = String(profileCropY); syncPhotoCrop();
+    });
+  }
+  const handlePhotoEscape = (event: KeyboardEvent): void => { if (event.key === 'Escape' && pendingProfilePhoto) cancelPhotoEdit(); };
+  const cancelPhotoEdit = (): void => { document.removeEventListener('keydown', handlePhotoEscape); pendingProfilePhoto = ''; render(); };
+  if (pendingProfilePhoto) document.addEventListener('keydown', handlePhotoEscape);
+  document.querySelector('#cancel-photo-edit')?.addEventListener('click', cancelPhotoEdit);
+  document.querySelector('#cancel-photo-edit-footer')?.addEventListener('click', cancelPhotoEdit);
+  document.querySelector('#photo-editor-backdrop')?.addEventListener('click', (event) => { if (event.target === event.currentTarget) cancelPhotoEdit(); });
+  document.querySelector('#confirm-photo-edit')?.addEventListener('click', () => {
+    const image = document.querySelector<HTMLImageElement>('#photo-crop-image');
+    if (!image?.complete || !image.naturalWidth) { announce('Photo is still loading. Try again in a moment.'); return; }
+    const size = 480; const scale = Math.max(size / image.naturalWidth, size / image.naturalHeight) * profileCropZoom;
+    const x = (size - image.naturalWidth * scale) * profileCropX / 100; const y = (size - image.naturalHeight * scale) * profileCropY / 100;
+    const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
+    const context = canvas.getContext('2d');
+    if (!context) { announce('Photo editing is unavailable in this browser.'); return; }
+    context.drawImage(image, x, y, image.naturalWidth * scale, image.naturalHeight * scale);
+    profilePhotoDraft = canvas.toDataURL('image/jpeg', .78); pendingProfilePhoto = ''; render();
+    document.querySelector('#remove-profile-photo')?.removeAttribute('hidden');
+    announce('Photo preview updated. Save your profile to keep it on this device.');
   });
   document.querySelector('#remove-profile-photo')?.addEventListener('click', () => { profilePhotoDraft = ''; document.querySelectorAll<HTMLElement>('.profile-avatar').forEach((node) => { node.textContent = localProfile.name?.[0]?.toUpperCase() || '✳'; }); document.querySelector('#remove-profile-photo')?.setAttribute('hidden',''); });
   bindChatEvents();
@@ -626,4 +751,5 @@ function isGiphyGifUrl(value: string): boolean {
   return /^https:\/\/media\d*\.giphy\.com\/media\/[a-z0-9_-]+\/[a-z0-9_-]+\.gif(?:\?[^#]*)?$/i.test(value);
 }
 
+bindSwipeNavigation();
 render();
