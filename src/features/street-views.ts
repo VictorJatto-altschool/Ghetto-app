@@ -183,6 +183,10 @@ class StreetViewsScreen {
 
   private onClick = (event: Event): void => {
     const target = event.target instanceof Element ? event.target : null;
+    if (this.composerOpen && target && !target.closest('.street-composer, #toggle-street-composer, #empty-create-post')) {
+      this.composerOpen = false;
+      this.root.querySelector('.street-composer')?.remove();
+    }
     if (target?.closest('#views-back')) { this.onBack(); return; }
     if (target?.closest('#toggle-street-composer, #empty-create-post')) {
       this.composerOpen = !this.composerOpen;

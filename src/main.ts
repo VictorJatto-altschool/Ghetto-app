@@ -601,6 +601,23 @@ function bindEvents(): void {
   bindChatEvents();
 }
 
+function dismissChatPopupsOutside(event: MouseEvent): void {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) return;
+  if (emojiPickerOpen && !target.closest('.emoji-picker, #emoji-button')) {
+    emojiPickerOpen = false;
+    document.querySelector('.emoji-picker')?.remove();
+  }
+  if (gifPickerOpen && !target.closest('.gif-picker, #gif-button')) {
+    gifPickerOpen = false;
+    document.querySelector('.gif-picker')?.remove();
+  }
+  if (showChatDetails && !target.closest('.chat-details, #conversation-menu')) {
+    showChatDetails = false;
+    document.querySelector('.chat-details')?.remove();
+  }
+}
+
 function bindChatEvents(): void {
   document.querySelector('#new-chat')?.addEventListener('click', () => { const modal = document.querySelector<HTMLElement>('#new-chat-modal'); if (modal) { modal.hidden = false; modal.querySelector<HTMLInputElement>('input[name="name"]')?.focus(); } });
   document.querySelector('#close-new-chat')?.addEventListener('click', () => { const modal = document.querySelector<HTMLElement>('#new-chat-modal'); if (modal) modal.hidden = true; });
@@ -752,4 +769,5 @@ function isGiphyGifUrl(value: string): boolean {
 }
 
 bindSwipeNavigation();
+document.addEventListener('click', dismissChatPopupsOutside);
 render();
