@@ -170,6 +170,7 @@ h1, h2, p { margin-top: 0; }
 .message-row.is-emoji-only { align-items: flex-end; }
 .message-bubble.is-emoji-bubble { display: grid; justify-items: end; min-width: 0; max-width: min(85%, 390px); padding: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; color: var(--text); line-height: 1; box-shadow: none; }
 .message-bubble.is-emoji-bubble .message-copy { display: block; font-size: clamp(46px, 5vw, 62px); line-height: 1.12; overflow-wrap: normal; }
+.message-bubble.is-multi-emoji-bubble .message-copy { font-size: clamp(28px, 3vw, 38px); line-height: 1.25; letter-spacing: .025em; }
 .message-bubble.is-emoji-bubble .message-meta { margin-top: 3px; padding: 4px 7px; border: 1px solid color-mix(in srgb, var(--border) 70%, transparent); border-radius: 99px; background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--muted); font-size: 8px; line-height: 1; }
 .message-bubble.is-emoji-bubble .message-meta time { margin: 0; color: inherit; }
 .message-bubble.is-emoji-bubble .message-reaction { right: auto; bottom: -8px; left: 0; }
@@ -881,6 +882,11 @@ select option { background: var(--surface); color: var(--text); }
 .tiktok-feed .street-video-caption { max-width: min(88%, 460px); padding-bottom: 24px; }
 .tiktok-feed .street-video-device-tag { align-self: flex-start; margin-top: auto; }
 .tiktok-feed .views-side, .tiktok-feed .street-feed-heading { display: none; }
+.tiktok-feed .street-composer-backdrop { position: fixed; z-index: 14; inset: 0; display: grid; place-items: center; padding: 20px; background: rgb(2 5 3 / 70%); backdrop-filter: blur(8px); animation: photo-backdrop-in .18s ease both; }
+.tiktok-feed .street-composer { position: relative; top: auto; right: auto; width: min(520px, 100%); max-height: min(840px, calc(100dvh - 40px)); overflow-y: auto; margin: 0; padding: 22px; border: 1px solid rgb(255 255 255 / 12%); border-radius: 8px 22px 22px 22px; background: #17211b; color: white; box-shadow: 0 28px 100px rgb(0 0 0 / 50%); animation: photo-editor-in .2s cubic-bezier(.2,.75,.2,1) both; }
+.tiktok-feed .street-composer .composer-intro { align-items: center; }
+.street-composer-close { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; margin-left: auto; border: 1px solid var(--border); border-radius: 50%; background: transparent; color: var(--secondary); font-size: 21px; cursor: pointer; }
+.street-composer-close:hover { background: var(--raised); color: var(--text); }
 .tiktok-feed .street-empty { position: relative; width: min(100%, 530px, 56.25dvh); height: 100%; min-height: 100%; margin: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 32px; border: 1px solid rgb(255 255 255 / 8%); border-radius: 18px; background: radial-gradient(ellipse at 50% 37%, #1b2b1e 0, #131c16 43%, #0c120e 100%); color: #fff; text-align: center; }
 .tiktok-feed .street-empty::before { position: absolute; inset: 12% 10%; z-index: 0; border: 1px solid rgb(200 237 83 / 7%); border-radius: 48% 52% 43% 57%; content: ''; transform: rotate(-18deg); pointer-events: none; }
 .tiktok-feed .street-empty > * { position: relative; z-index: 1; }
@@ -909,4 +915,9 @@ select option { background: var(--surface); color: var(--text); }
   .tiktok-feed .street-video-overlay { padding: 64px 12px 18px; }
   .tiktok-feed .street-empty { width: 100%; border: 0; border-radius: 0; }
   .tiktok-feed .street-empty::before { inset: 19% 9%; }
+  .tiktok-feed .street-composer-backdrop { align-items: end; padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); }
+  .tiktok-feed .street-composer { width: 100%; max-height: min(86dvh, 720px); padding: 18px 15px; border-radius: 20px 20px 8px 8px; }
 }
+
+/* The navigation mark and browser favicon share the same brand artwork. */
+.brand-glyph { border-radius: 0; background-color: transparent; background-image: url('/favicon.svg'); background-position: center; background-repeat: no-repeat; background-size: 100% 100%; color: transparent !important; font-size: 0 !important; }

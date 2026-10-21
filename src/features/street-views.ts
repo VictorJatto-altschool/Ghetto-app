@@ -152,7 +152,7 @@ class StreetViewsScreen {
     const author = this.authorName();
     if (this.pendingMedia) this.mediaUrl = this.createImageUrl(this.pendingMedia);
     const previewMedia = this.pendingMedia ? `<div class="attachment-preview">${this.pendingMedia.type.startsWith('video/') ? `<video src="${this.mediaUrl ?? ''}" muted playsinline controls></video>` : `<img src="${this.mediaUrl ?? ''}" alt="Selected image preview">`}<div><strong>${escapeHtml(this.pendingMedia.name)}</strong><span>${(this.pendingMedia.size / (1024 * 1024)).toFixed(1)} MB · stays on this device</span></div><button type="button" data-clear-media aria-label="Remove selected media">×</button></div>` : '';
-    const composer = this.composerOpen ? `<form class="street-composer" id="street-composer"><div class="composer-intro"><span class="street-avatar">${escapeHtml(author.slice(0, 1).toUpperCase())}</span><div><strong>Post a video</strong><span>Your video preview stays in this browser.</span></div></div><label class="street-body-label" for="street-body"><span class="visually-hidden">Video caption</span><textarea id="street-body" name="body" rows="3" maxlength="5000" placeholder="Write a caption…" aria-describedby="street-compose-note">${escapeHtml(this.draftBody)}</textarea></label><div class="street-compose-options"><label>Audience<select name="audience"><option value="public" ${this.draftAudience === 'public' ? 'selected' : ''}>Public</option><option value="followers" ${this.draftAudience === 'followers' ? 'selected' : ''}>Followers</option></select></label><label>Campus tag <input name="campus" maxlength="80" placeholder="Optional campus or community" value="${escapeHtml(this.draftCampus)}"></label></div>${previewMedia}<div class="street-compose-actions"><label class="media-picker">＋ Choose a video<input id="street-media" type="file" accept="video/mp4,video/webm" hidden></label><span id="street-character-count">${this.draftBody.length} / 5000</span><button class="street-submit" type="submit" ${this.error || this.loading || this.saving ? 'disabled' : ''}>Save video</button></div><p class="street-compose-note" id="street-compose-note">MP4 and WEBM up to 100 MB. Video stays on this device; nothing is published or synced.</p></form>` : '';
+    const composer = this.composerOpen ? `<div class="street-composer-backdrop"><form class="street-composer" id="street-composer" role="dialog" aria-modal="true" aria-labelledby="street-composer-title"><div class="composer-intro"><span class="street-avatar">${escapeHtml(author.slice(0, 1).toUpperCase())}</span><div><strong id="street-composer-title">Post a video</strong><span>Your video preview stays in this browser.</span></div><button type="button" class="street-composer-close" id="street-composer-close" aria-label="Close video composer">×</button></div><label class="street-body-label" for="street-body"><span class="visually-hidden">Video caption</span><textarea id="street-body" name="body" rows="3" maxlength="5000" placeholder="Write a caption…" aria-describedby="street-compose-note">${escapeHtml(this.draftBody)}</textarea></label><div class="street-compose-options"><label>Audience<select name="audience"><option value="public" ${this.draftAudience === 'public' ? 'selected' : ''}>Public</option><option value="followers" ${this.draftAudience === 'followers' ? 'selected' : ''}>Followers</option></select></label><label>Campus tag <input name="campus" maxlength="80" placeholder="Optional campus or community" value="${escapeHtml(this.draftCampus)}"></label></div>${previewMedia}<div class="street-compose-actions"><label class="media-picker">＋ Choose a video<input id="street-media" type="file" accept="video/mp4,video/webm" hidden></label><span id="street-character-count">${this.draftBody.length} / 5000</span><button class="street-submit" type="submit" ${this.error || this.loading || this.saving ? 'disabled' : ''}>Save video</button></div><p class="street-compose-note" id="street-compose-note">MP4 and WEBM up to 100 MB. Video stays on this device; nothing is published or synced.</p></form></div>` : '';
     const filterButtons: Array<[typeof this.filter, string]> = [['all','For you'],['followers','Following']];
     this.root.innerHTML = `<section class="views-overlay tiktok-feed" aria-labelledby="views-title">
       <header class="views-header"><div><button class="views-back" id="views-back" type="button" aria-label="Back to chats">← <span>Back to chats</span></button><p class="eyebrow">STREET VIEWS</p><h1 id="views-title">For you</h1></div><div class="views-header-actions"><span class="views-status"><i></i> DEVICE ONLY</span><button class="views-create" id="toggle-street-composer" type="button" aria-label="Post a video">＋ Post a video</button></div></header>
@@ -185,13 +185,19 @@ class StreetViewsScreen {
     const target = event.target instanceof Element ? event.target : null;
     if (this.composerOpen && target && !target.closest('.street-composer, #toggle-street-composer, #empty-create-post')) {
       this.composerOpen = false;
-      this.root.querySelector('.street-composer')?.remove();
+      this.root.querySelector('.street-composer-backdrop')?.remove();
     }
     if (target?.closest('#views-back')) { this.onBack(); return; }
     if (target?.closest('#toggle-street-composer, #empty-create-post')) {
       this.composerOpen = !this.composerOpen;
       this.render();
       if (this.composerOpen) this.root.querySelector<HTMLTextAreaElement>('#street-body')?.focus();
+      return;
+    }
+    if (target?.closest('#street-composer-close')) {
+      this.composerOpen = false;
+      this.root.querySelector('.street-composer-backdrop')?.remove();
+      this.root.querySelector<HTMLButtonElement>('#toggle-street-composer')?.focus();
       return;
     }
     const soundButton = target?.closest<HTMLButtonElement>('[data-toggle-video-sound]');

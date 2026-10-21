@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
   <title id="title">GHETTO APP</title>
   <rect x="2" y="2" width="60" height="60" rx="19" fill="#c8ed53" />
-  <text x="31" y="49" text-anchor="middle" fill="#14211a" font-family="Arial Rounded MT Bold, Arial, sans-serif" font-size="49" font-weight="800" letter-spacing="-5">g</text>
-  <circle cx="51" cy="13" r="3" fill="#cb5b3f" />
+  <path fill="#14211a" fill-rule="evenodd" d="M31.5 16.5c-9.5 0-16 6.1-16 15.1s6.5 15.1 16 15.1c3.6 0 6.5-.9 8.8-2.7v2.2c0 4.4-2.6 6.9-7.3 6.9-3.5 0-6.8-1.1-10-3.2l-3.8 6.7c3.9 2.7 8.6 4.1 14 4.1 11 0 17.2-5.9 17.2-16.2v-32h-9.1v2.1c-2.5-2-5.7-3.1-9.8-3.1zm0 21.8c-4.1 0-6.8-2.8-6.8-6.7s2.7-6.7 6.8-6.7 6.8 2.8 6.8 6.7-2.7 6.7-6.8 6.7z" />
 </svg>
